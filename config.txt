@@ -1,0 +1,19 @@
+# root for OS
+
+root:{"windowRoot": "U:"}
+rootProject:projects/ttv/episodes
+
+# asset root
+assetRoot:projects/ttv/assets
+
+# asset project
+assetProject:ttv_assets
+
+# mayaFile ext
+ext:{"maya": "ma"}
+
+# logo file
+logo:logo2.png
+
+# automatic download thumbnail "auto" or "off"
+thumbnail:auto
