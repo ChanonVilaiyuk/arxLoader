@@ -460,7 +460,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>Create Reference</string>
+       <string>Create All Reference</string>
       </property>
      </widget>
      <widget class="QCheckBox" name="thumbnail_checkBox">
@@ -479,11 +479,22 @@
        <bool>true</bool>
       </property>
      </widget>
-     <zorder>main_label</zorder>
-     <zorder>main_listWidget</zorder>
-     <zorder>createReference_pushButton</zorder>
-     <zorder>thumbnail_checkBox</zorder>
-     <zorder>thumbnail_checkBox</zorder>
+     <widget class="QCheckBox" name="allowMultipleAssets_checkBox">
+      <property name="geometry">
+       <rect>
+        <x>130</x>
+        <y>490</y>
+        <width>151</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Allow multiple asset</string>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+     </widget>
     </widget>
     <widget class="QFrame" name="list_frame">
      <property name="geometry">
@@ -575,18 +586,6 @@
       <string/>
      </property>
     </widget>
-    <zorder>projectInfo_frame</zorder>
-    <zorder>frame_3</zorder>
-    <zorder>filter_frame</zorder>
-    <zorder>search_frame</zorder>
-    <zorder>add_pushButton</zorder>
-    <zorder>remove_pushButton</zorder>
-    <zorder>inforamtion_frame</zorder>
-    <zorder>clear_pushButton</zorder>
-    <zorder>frame_2</zorder>
-    <zorder>frame_2</zorder>
-    <zorder>list_frame</zorder>
-    <zorder>logo_label</zorder>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">

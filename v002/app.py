@@ -63,8 +63,6 @@ class MyForm(QtGui.QMainWindow):
 		self.fileExt = eval(self.configData['ext'])['maya']
 		self.noPreviewIcon = '%s/%s' % (self.iconPath, 'noPreview.png')
 		self.thumbnail = self.configData['thumbnail']
-		self.itemColor = [0, 0, 0]
-		self.textItemColor = [[200, 200, 200], [120, 120, 120], [100, 100, 100]]
 
 		# init connections
 		self.initConnections()
@@ -155,8 +153,6 @@ class MyForm(QtGui.QMainWindow):
 			mode = 'browser'
 
 		# set all UI
-		self.ui.information_label.setText('Processing ...')
-		QtGui.QApplication.processEvents()
 		self.setUI(mode)
 
 
@@ -397,13 +393,12 @@ class MyForm(QtGui.QMainWindow):
 		i = 0
 		info = []
 		addIcon = 0
-		textColors = self.textItemColor
-
-		scenePathInfo = self.getSceneAssets()
-
 
 		if self.ui.thumbnail_checkBox.isChecked() : 
 			addIcon = 1
+
+		# get in scene reference
+
 
 
 		for each in assets : 
@@ -416,23 +411,6 @@ class MyForm(QtGui.QMainWindow):
 				color = [100, 0, 0]
 				thumbnailFile = self.assetInfo[each['name']]['thumbnailFile']
 				iconPath = self.noPreviewIcon
-
-				numberDisplay = 'In scene x 0'
-				number = 0
-
-				if pullFile in scenePathInfo.keys() : 
-					number = scenePathInfo[pullFile]['number']
-					
-				if number : 
-					numberDisplay = 'In scene x %s' % number
-
-				textColors[2] = [200, 100, 100]
-
-				if number > 0 : 
-					textColors[2] = [100, 200, 0]
-
-				if number == 0 : 
-					textColors[2] = [200, 200, 0]
 
 				if os.path.exists(thumbnailFile) : 
 					iconPath = thumbnailFile
@@ -456,7 +434,7 @@ class MyForm(QtGui.QMainWindow):
 					print '------------------------' 
 					missingCount+=1
 
-				self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, size = 90)
+				self.addListWidgetItem('main_listWidget', display, iconPath, color, addIcon, size = 90)
 
 			i+=1
 
@@ -564,9 +542,6 @@ class MyForm(QtGui.QMainWindow):
 		missingCount = 0
 		addIcon = 0
 
-		textColors = self.textItemColor
-
-
 		if self.ui.thumbnail_checkBox.isChecked() : 
 			addIcon = 1
 
@@ -610,7 +585,7 @@ class MyForm(QtGui.QMainWindow):
 								color = [100, 0, 0]
 								missingCount+=1
 
-							self.addListWidgetItem(each, fileType, '', iconPath, color, textColors, addIcon, 90)
+							self.addListWidgetItem('main_listWidget', each, iconPath, color, addIcon, 90)
 							assetCount+=1
 
 		info.append('	%s	assets' % assetCount)
@@ -625,7 +600,7 @@ class MyForm(QtGui.QMainWindow):
 
 
 	def showMenu(self,pos):
-		menu1, state = self.getMenu1()
+		menu1, state = self.getMenu1('main_listWidget')
 		if self.ui.main_listWidget.currentItem() : 
 			menu=QtGui.QMenu(self)
 			menu.addAction(menu1)
@@ -638,9 +613,9 @@ class MyForm(QtGui.QMainWindow):
 				self.menuCommand(result.text(), 'main_listWidget')
 
 	# open in explorer command
-	def getMenu1(self) : 
-		text = self.getSelectedWidgetItem()
-		item = text[0]
+	def getMenu1(self, listWidget) : 
+		cmd = 'self.ui.%s.currentItem().text()' % listWidget
+		item = str(eval(cmd))
 		menu = None
 
 		heroFile = self.assetInfo[item]['pullFile']
@@ -685,16 +660,10 @@ class MyForm(QtGui.QMainWindow):
 	# signal call button command
 	def doCreateReference(self) : 
 
-		# check allow multiple asset
-		multipleAsset = self.ui.allowMultipleAssets_checkBox.isChecked()
-
-		# get what exists in the scene
-		scenePathInfo = self.getSceneAssets()
-
 		# read from shotgun
 
 		if self.ui.shotgun_radioButton.isChecked() : 
-			readAssetList = self.getAllListWidgetItem()
+			readAssetList = self.getAllListWidgetItem('main_listWidget')
 
 			for each in readAssetList : 
 				assetName = self.assetInfo[each]['code']
@@ -702,16 +671,9 @@ class MyForm(QtGui.QMainWindow):
 				path = self.assetInfo[each]['pullFile']
 
 				if path : 
-					if multipleAsset : 
-						result = hook.createReference(namespace, path)
-
-					else : 
-						# check first if exists
-						if not path in scenePathInfo.keys() : 
-							result = hook.createReference(namespace, path)
+					result = hook.createReference(namespace, path)
 
 
-		self.refreshUI()
 
 		# read from list
 		if self.ui.manualBrowser_radioButton.isChecked() : 
@@ -719,58 +681,20 @@ class MyForm(QtGui.QMainWindow):
 
 		
 
-	'''
-	this function get all reference in the scene and return path and number of references
-	'''
-
-	def getSceneAssets(self) : 
-		allRefs = hook.getAllReferencePath()
-		paths = []
-		sceneAssetPathInfo = dict()
-
-		for each in allRefs : 
-			namespace = hook.getNamespace(each)
-			path = each.split('{')[0]
-			number = 1
-
-			if not path in paths : 
-				paths.append(path)
-
-			else : 
-				number = sceneAssetPathInfo[path]['number'] + 1
-
-			sceneAssetPathInfo[path] = {'namespace': namespace, 'number': number}
-
-		return sceneAssetPathInfo
-
-
 
 
 
 
 	# utils =================================================================
 
-	def getSelectedWidgetItem(self) : 
-		item = self.ui.main_listWidget.currentItem()
-		customWidget = self.ui.main_listWidget.itemWidget(item)
-		text1 = customWidget.text1()
-		text2 = customWidget.text2()
-		text3 = customWidget.text3()
-		result = [text1, text2, text3]
-
-		return result
-
-
-	def getAllListWidgetItem(self) : 
-		count = self.ui.main_listWidget.count()
+	def getAllListWidgetItem(self, widget) : 
+		count = eval('self.ui.%s.count()' % widget)
 		items = []
 
 		for i in range(count) : 
-			item = self.ui.main_listWidget.item(i)
-			customWidget = self.ui.main_listWidget.itemWidget(item)
-			text1 = customWidget.text1()
+			item = eval('self.ui.%s.item(i).text()' % widget)
 
-			items.append(text1)
+			items.append(item)
 
 
 		return items
@@ -794,33 +718,39 @@ class MyForm(QtGui.QMainWindow):
 		return targetFile
 
 
-	def addListWidgetItem(self, text1, text2, text3, iconPath, color, textColors, addIcon = 1, size = 90) : 		
+	def addListWidgetItem(self, listWidget, text, iconPath, color, addIcon = 1, size = 90) : 
+		
+		# icon = QtGui.QIcon()
+		# icon.addPixmap(QtGui.QPixmap(iconPath),QtGui.QIcon.Normal,QtGui.QIcon.Off)
+		# cmd = 'QtGui.QListWidgetItem(self.ui.%s)' % listWidget
+		# item = eval(cmd)
 
-		myCustomWidget = customQWidgetItem()
-		myCustomWidget.setText1(text1)
-		myCustomWidget.setText2(text2)
-		myCustomWidget.setText3(text3)
+		# if addIcon : 
+		# 	item.setIcon(icon)
+		# 	cmd2 = 'self.ui.%s.setIconSize(QtCore.QSize(%s, %s))' % (listWidget, size, size)
+		# 	eval(cmd2)
 
-		myCustomWidget.setTextColor1(textColors[0])
-		myCustomWidget.setTextColor2(textColors[1])
-		myCustomWidget.setTextColor3(textColors[2])
+		# item.setText(text)
+		# item.setBackground(QtGui.QColor(color[0], color[1], color[2]))
 
-		if addIcon : 
-			myCustomWidget.setIcon(iconPath, size)
+		myQCustomQWidget = QCustomQWidget()
+		myQCustomQWidget.setTextUp(text)
+		myQCustomQWidget.setTextDown(text)
+		myQCustomQWidget.setIcon(iconPath)
 
-		item = QtGui.QListWidgetItem(self.ui.main_listWidget)
-
-		item.setSizeHint(myCustomWidget.sizeHint())
+		cmd = 'QtGui.QListWidgetItem(self.ui.%s)' % listWidget
+		item = eval(cmd)
+		item.setSizeHint(myQCustomQWidget.sizeHint())
 		self.ui.main_listWidget.addItem(item)
-		self.ui.main_listWidget.setItemWidget(item, myCustomWidget)
+		self.ui.main_listWidget.setItemWidget(item, myQCustomQWidget)
 		item.setBackground(QtGui.QColor(color[0], color[1], color[2]))
 
 		
 		# QtGui.QApplication.processEvents()
 
-class customQWidgetItem(QtGui.QWidget) : 
+class customQWidgetItem(QtGui.Qwidget) : 
 	def __init__(self, parent = None) : 
-		super(customQWidgetItem, self).__init__(parent)
+		super(QCustomQWidget, self).__init__(parent)
 		# set label 
 		self.textQVBoxLayout = QtGui.QVBoxLayout()
 		self.text1Label = QtGui.QLabel()
@@ -834,56 +764,85 @@ class customQWidgetItem(QtGui.QWidget) :
 		self.allLayout = QtGui.QHBoxLayout()
 		self.iconQLabel = QtGui.QLabel()
 		self.allLayout.addWidget(self.iconQLabel, 0)
-		self.allLayout.addLayout(self.textQVBoxLayout, 1)
+		self.allLayout.addWidget(self.textQVBoxLayout, 1)
 		self.allLayout.setContentsMargins(2, 2, 2, 2)
 		self.setLayout(self.allLayout)
 
 		# set font
 		font = QtGui.QFont()
-		font.setPointSize(9)
-		# font.setWeight(70)
+		font.setPointSize(10)
+		font.setWeight(70)
 		font.setBold(True)
 		self.text1Label.setFont(font)
+
+		# set font color
+		self.text1Label.setStyleSheet('color: rgb(200, 200, 200);')
+		self.text2Label.setStyleSheet('color: rgb(120, 120, 120);')
+		self.text3Label.setStyleSheet('color: rgb(0, 0, 0);')
 
 
 	def setText1(self, text) : 
 		self.text1Label.setText(text)
 
-
 	def setText2(self, text) : 
 		self.text2Label.setText(text)
-
 
 	def setText3(self, text) : 
 		self.text3Label.setText(text)
 
-
-	def setTextColor1(self, color) : 
-		self.text1Label.setStyleSheet('color: rgb(%s, %s, %s);' % (color[0], color[1], color[2]))
-
-
-	def setTextColor2(self, color) : 
-		self.text2Label.setStyleSheet('color: rgb(%s, %s, %s);' % (color[0], color[1], color[2]))
-
-
-	def setTextColor3(self, color) : 
-		self.text3Label.setStyleSheet('color: rgb(%s, %s, %s);' % (color[0], color[1], color[2]))
-
-
 	def setIcon(self, iconPath, size) : 
 		self.iconQLabel.setPixmap(QtGui.QPixmap(iconPath).scaled(size, size, QtCore.Qt.KeepAspectRatio))
-
 
 	def text1(self) : 
 		return self.text1Label.text()
 
-
 	def text2(self) : 
 		return self.text2Label.text()
-
 
 	def text3(self) : 
 		return self.text3Label.text()
 
+
+# class QCustomQWidget (QtGui.QWidget):
+# 	def __init__ (self, parent = None):
+# 		super(QCustomQWidget, self).__init__(parent)
+# 		self.textQVBoxLayout = QtGui.QVBoxLayout()
+# 		self.textUpQLabel    = QtGui.QLabel()
+# 		self.textDownQLabel  = QtGui.QLabel()
+# 		self.textDown2QLabel = QtGui.QLabel()
+# 		self.textQVBoxLayout.addWidget(self.textUpQLabel)
+# 		self.textQVBoxLayout.addWidget(self.textDownQLabel)
+# 		self.allQHBoxLayout  = QtGui.QHBoxLayout()
+# 		self.iconQLabel      = QtGui.QLabel()
+# 		self.allQHBoxLayout.addWidget(self.iconQLabel, 0)
+# 		self.allQHBoxLayout.addLayout(self.textQVBoxLayout, 1)
+# 		self.allQHBoxLayout.setStretch(1, 1)
+# 		self.allQHBoxLayout.setContentsMargins(2, 2, 2, 2)
+# 		self.setLayout(self.allQHBoxLayout)
+# 		# setStyleSheet
+# 		self.textUpQLabel.setStyleSheet('''
+# 			color: rgb(200, 200, 200);
+# 		''')
+# 		self.textDownQLabel.setStyleSheet('''
+# 			color: rgb(120, 120, 120);
+# 		''')
+
+# 		self.font = QtGui.QFont()
+# 		self.font.setPointSize(10)
+# 		self.font.setWeight(75)
+# 		self.font.setBold(True)
+# 		self.textUpQLabel.setFont(self.font)
+
+# 	def setTextUp (self, text):
+# 		self.textUpQLabel.setText(text)
+
+# 	def setTextDown (self, text):
+# 		self.textDownQLabel.setText(text)
+
+# 	def setIcon (self, imagePath):
+# 		self.iconQLabel.setPixmap(QtGui.QPixmap(imagePath).scaled(90, 90, QtCore.Qt.KeepAspectRatio))
+
+# 	def textUp(self) : 
+# 		return self.textUpQLabel.text()
 
 

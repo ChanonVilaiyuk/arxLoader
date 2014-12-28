@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'U:/extensions/studioTools/python/arxLoader/ui.ui'
 #
-# Created: Mon Dec 22 01:16:29 2014
+# Created: Sun Dec 28 12:17:50 2014
 #      by: pyside-uic 0.2.14 running on PySide 1.2.0
 #
 # WARNING! All changes made in this file will be lost!
@@ -212,6 +212,10 @@ class Ui_loaderWindow(object):
         self.thumbnail_checkBox.setGeometry(QtCore.QRect(10, 490, 101, 17))
         self.thumbnail_checkBox.setChecked(True)
         self.thumbnail_checkBox.setObjectName("thumbnail_checkBox")
+        self.allowMultipleAssets_checkBox = QtGui.QCheckBox(self.frame_2)
+        self.allowMultipleAssets_checkBox.setGeometry(QtCore.QRect(130, 490, 151, 17))
+        self.allowMultipleAssets_checkBox.setChecked(False)
+        self.allowMultipleAssets_checkBox.setObjectName("allowMultipleAssets_checkBox")
         self.list_frame = QtGui.QFrame(self.frame)
         self.list_frame.setGeometry(QtCore.QRect(550, 80, 291, 551))
         self.list_frame.setFrameShape(QtGui.QFrame.Box)
@@ -277,8 +281,9 @@ class Ui_loaderWindow(object):
         self.clear_pushButton.setText(QtGui.QApplication.translate("loaderWindow", "Clear All", None, QtGui.QApplication.UnicodeUTF8))
         self.main_label.setText(QtGui.QApplication.translate("loaderWindow", "Shotgun Asset List", None, QtGui.QApplication.UnicodeUTF8))
         self.main_listWidget.setSortingEnabled(False)
-        self.createReference_pushButton.setText(QtGui.QApplication.translate("loaderWindow", "Create Reference", None, QtGui.QApplication.UnicodeUTF8))
+        self.createReference_pushButton.setText(QtGui.QApplication.translate("loaderWindow", "Create All Reference", None, QtGui.QApplication.UnicodeUTF8))
         self.thumbnail_checkBox.setText(QtGui.QApplication.translate("loaderWindow", "Show Thumbnail", None, QtGui.QApplication.UnicodeUTF8))
+        self.allowMultipleAssets_checkBox.setText(QtGui.QApplication.translate("loaderWindow", "Allow multiple asset", None, QtGui.QApplication.UnicodeUTF8))
         self.createAllReference_pushButton.setText(QtGui.QApplication.translate("loaderWindow", "Create All References", None, QtGui.QApplication.UnicodeUTF8))
         self.createSelectedReference_pushButton.setText(QtGui.QApplication.translate("loaderWindow", "Create Selected Reference", None, QtGui.QApplication.UnicodeUTF8))
         self.referenceList_label.setText(QtGui.QApplication.translate("loaderWindow", "Reference lists", None, QtGui.QApplication.UnicodeUTF8))
