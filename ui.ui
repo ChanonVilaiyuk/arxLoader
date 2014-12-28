@@ -479,7 +479,7 @@
        <bool>true</bool>
       </property>
      </widget>
-     <widget class="QCheckBox" name="allowMultipleAssets_checkBox">
+     <widget class="QCheckBox" name="selectedReference_checkBox">
       <property name="geometry">
        <rect>
         <x>130</x>
@@ -489,7 +489,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>Allow multiple asset</string>
+       <string>Create selected only</string>
       </property>
       <property name="checked">
        <bool>false</bool>

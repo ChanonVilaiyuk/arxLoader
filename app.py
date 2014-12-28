@@ -83,6 +83,7 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.variation_checkBox.stateChanged.connect(self.setFilterSignal3)
 		self.ui.main_listWidget.customContextMenuRequested.connect(self.showMenu)
 		self.ui.thumbnail_checkBox.stateChanged.connect(self.refreshUI)
+		self.ui.selectedReference_checkBox.stateChanged.connect(self.setReferenceButton)
 
 
 	def initFunctions(self) : 
@@ -158,6 +159,16 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.information_label.setText('Processing ...')
 		QtGui.QApplication.processEvents()
 		self.setUI(mode)
+
+
+
+	def setReferenceButton(self) : 
+
+		if self.ui.selectedReference_checkBox.isChecked() : 
+			self.ui.createReference_pushButton.setText('Create Selected Reference')
+
+		else : 
+			self.ui.createReference_pushButton.setText('Create All References')
 
 
 	# load data ==================================================================================================
@@ -639,8 +650,8 @@ class MyForm(QtGui.QMainWindow):
 
 	# open in explorer command
 	def getMenu1(self) : 
-		text = self.getSelectedWidgetItem()
-		item = text[0]
+		text = self.getSelectedWidgetItem(1)
+		item = text[-1]
 		menu = None
 
 		heroFile = self.assetInfo[item]['pullFile']
@@ -686,29 +697,49 @@ class MyForm(QtGui.QMainWindow):
 	def doCreateReference(self) : 
 
 		# check allow multiple asset
-		multipleAsset = self.ui.allowMultipleAssets_checkBox.isChecked()
+		multipleAsset = True
 
 		# get what exists in the scene
 		scenePathInfo = self.getSceneAssets()
 
+		# check create all or selected
+		selOnly = self.ui.selectedReference_checkBox.isChecked()
+
 		# read from shotgun
 
 		if self.ui.shotgun_radioButton.isChecked() : 
-			readAssetList = self.getAllListWidgetItem()
 
-			for each in readAssetList : 
-				assetName = self.assetInfo[each]['code']
-				namespace = assetName
-				path = self.assetInfo[each]['pullFile']
+			if selOnly : 
+				readAssetList = self.getSelectedWidgetItem(1)
 
-				if path : 
-					if multipleAsset : 
-						result = hook.createReference(namespace, path)
+			else : 
+				readAssetList = self.getAllListWidgetItem()
 
-					else : 
-						# check first if exists
+			if readAssetList : 
+
+				for each in readAssetList : 
+					assetName = self.assetInfo[each]['code']
+					namespace = assetName
+					path = self.assetInfo[each]['pullFile']
+
+					if path : 
 						if not path in scenePathInfo.keys() : 
 							result = hook.createReference(namespace, path)
+
+						else : 
+							# asking if want to create another reference
+							title = 'Confirm create multiple reference'
+							description = '%s already exists in the scene, do you still want to create reference?' % assetName
+							result = self.messageBox(title, description)
+
+							if result == QtGui.QMessageBox.Ok : 
+								result = hook.createReference(namespace, path)
+
+					else : 
+						if selOnly : 
+							title = 'Asset not exists'
+							dialog = '%s has no approved, MASTER or published file' % assetName
+							self.completeDialog(title, dialog)
 
 
 		self.refreshUI()
@@ -750,15 +781,25 @@ class MyForm(QtGui.QMainWindow):
 
 	# utils =================================================================
 
-	def getSelectedWidgetItem(self) : 
-		item = self.ui.main_listWidget.currentItem()
-		customWidget = self.ui.main_listWidget.itemWidget(item)
-		text1 = customWidget.text1()
-		text2 = customWidget.text2()
-		text3 = customWidget.text3()
-		result = [text1, text2, text3]
+	def getSelectedWidgetItem(self, lineText) : 
+		items = self.ui.main_listWidget.selectedItems()
+		allItems = []
 
-		return result
+		for item in items : 
+			customWidget = self.ui.main_listWidget.itemWidget(item)
+
+			if lineText == 1 : 
+				text = customWidget.text1()
+
+			if lineText == 2 : 
+				text = customWidget.text2()
+
+			if lineText == 3 : 
+				text = customWidget.text3()
+			
+			allItems.append(text)
+
+		return allItems
 
 
 	def getAllListWidgetItem(self) : 
@@ -817,6 +858,19 @@ class MyForm(QtGui.QMainWindow):
 
 		
 		# QtGui.QApplication.processEvents()
+
+
+	def messageBox(self, title, description) : 
+		result = QtGui.QMessageBox.question(self,title,description ,QtGui.QMessageBox.Ok, QtGui.QMessageBox.Cancel)
+
+		return result
+
+
+
+	def completeDialog(self, title, dialog) : 
+		QtGui.QMessageBox.information(self, title, dialog, QtGui.QMessageBox.Ok)
+
+		
 
 class customQWidgetItem(QtGui.QWidget) : 
 	def __init__(self, parent = None) : 
