@@ -65,6 +65,8 @@ class MyForm(QtGui.QMainWindow):
 		self.thumbnail = self.configData['thumbnail']
 		self.itemColor = [0, 0, 0]
 		self.textItemColor = [[200, 200, 200], [120, 120, 120], [100, 100, 100]]
+		self.sceneInfo = None
+		self.shotAssets = None
 
 		# init connections
 		self.initConnections()
@@ -105,32 +107,43 @@ class MyForm(QtGui.QMainWindow):
 			text = 'Shotgun Asset List'
 			value2 = True
 			mode = 'shotgun'
+			buttonText = 'Create All Reference'
+			value3 = False
 
 
 		if self.ui.manualBrowser_radioButton.isChecked() : 
 			value = True
-			w = 850
+			# w = 850
+			# h = 640
+			# lPos = 620
+			w = 550
 			h = 640
-			lPos = 620
+			lPos = 320
 			text = 'All Asset List'
 			value2 = False
 			mode = 'browser'
+			buttonText = 'Create Reference'
+			value3 = False
 		
 		# show / hide
-		self.ui.add_pushButton.setVisible(value)
-		self.ui.remove_pushButton.setVisible(value)
-		self.ui.clear_pushButton.setVisible(value)
+		self.ui.add_pushButton.setVisible(value3)
+		self.ui.remove_pushButton.setVisible(value3)
+		self.ui.clear_pushButton.setVisible(value3)
 		self.ui.search_frame.setVisible(value)
 		self.ui.filter_frame.setVisible(value)
-		self.ui.list_frame.setVisible(value)
+		self.ui.list_frame.setVisible(value3)
 		self.ui.main_label.setText(text)
 		self.ui.projectInfo_frame.setVisible(value2)
+		self.ui.selectedReference_checkBox.setVisible(value2)
 
 		# resizing window
 		self.ui.frame.resize(w, h)
 		self.resize(w + 14, h + 14)
 		self.ui.logo_label.setGeometry(lPos, 10, 221, 61)
 		self.setLogo()
+
+		# button text
+		self.ui.createReference_pushButton.setText(buttonText)
 
 		# set all UI
 		self.ui.information_label.setText('Processing ...')
@@ -177,10 +190,12 @@ class MyForm(QtGui.QMainWindow):
 	def loadData(self) : 
 		# load scene name
 		sceneName = hook.getSceneName()
-		self.sceneInfo = self.getSceneInfo(sceneName)
 
-		# load shotgun shot
-		self.shotAssets = self.loadShotgunAsset()
+		if sceneName : 
+			self.sceneInfo = self.getSceneInfo(sceneName)
+
+			# load shotgun shot
+			self.shotAssets = self.loadShotgunAsset()
 
 		# load all shotgun asset
 		self.allSgAssets = self.loadAllShotgunAsset()
@@ -195,24 +210,26 @@ class MyForm(QtGui.QMainWindow):
 		# layout ex.
 		# U:/projects/ttv/episodes/e100/work/sq010/layout/maya/ttv_e100_010_layout.v002.ma
 		eles = sceneName.replace('%s/' % self.rootProject, '').split('/')
-		episode = eles[0]
-		level = eles[1]
-		sequence = eles[2]
-		fileName = eles[-1]
-		shot = ''
-		project = 'ttv_%s' % episode
 
-		if 'layout' in eles : 
-			step = eles[3]
+		if len(eles) > 6 : 
+			episode = eles[0]
+			level = eles[1]
+			sequence = eles[2]
+			fileName = eles[-1]
+			shot = ''
+			project = 'ttv_%s' % episode
 
-		if 'anim' in eles : 
-			shot = eles[3]
-			step = eles[4]
+			if 'layout' in eles : 
+				step = eles[3]
+
+			if 'anim' in eles : 
+				shot = eles[3]
+				step = eles[4]
 
 
-		info = {'project': project, 'episode': episode, 'step': step, 'sequence': sequence, 'shot': shot}
+			info = {'project': project, 'episode': episode, 'step': step, 'sequence': sequence, 'shot': shot}
 
-		return info
+			return info
 
 
 	def loadShotgunAsset(self) : 
@@ -566,6 +583,9 @@ class MyForm(QtGui.QMainWindow):
 		parentKw = str(self.ui.parent_comboBox.currentText())
 		variationKw = str(self.ui.variation_comboBox.currentText())
 
+		# get in scene reference
+		scenePathInfo = self.getSceneAssets()
+
 		self.ui.main_listWidget.clear()
 		color = [100, 0, 0]
 		assetCount = 0
@@ -583,11 +603,14 @@ class MyForm(QtGui.QMainWindow):
 
 		for each in sorted(assetInfo.keys()) : 
 			fileType = assetInfo[each]['fileType']
+			pullFile = assetInfo[each]['pullFile']
 			assetType = assetInfo[each]['assetType']
 			parent = assetInfo[each]['parent']
 			variation = assetInfo[each]['variation']
 			thumbnailFile = assetInfo[each]['thumbnailFile']
 			iconPath = self.noPreviewIcon
+			numberDisplay = 'In scene x 0'
+			number = 0
 
 			if os.path.exists(thumbnailFile) : 
 				iconPath = thumbnailFile
@@ -621,7 +644,21 @@ class MyForm(QtGui.QMainWindow):
 								color = [100, 0, 0]
 								missingCount+=1
 
-							self.addListWidgetItem(each, fileType, '', iconPath, color, textColors, addIcon, 90)
+							if pullFile in scenePathInfo.keys() : 
+								number = scenePathInfo[pullFile]['number']
+
+							if number : 
+								numberDisplay = 'In scene x %s' % number
+
+							textColors[2] = [200, 100, 100]
+
+							if number > 0 : 
+								textColors[2] = [100, 200, 0]
+
+							if number == 0 : 
+								textColors[2] = [200, 200, 0]
+
+							self.addListWidgetItem(each, fileType, numberDisplay, iconPath, color, textColors, addIcon, 90)
 							assetCount+=1
 
 		info.append('	%s	assets' % assetCount)
@@ -715,38 +752,41 @@ class MyForm(QtGui.QMainWindow):
 			else : 
 				readAssetList = self.getAllListWidgetItem()
 
-			if readAssetList : 
+		if self.ui.manualBrowser_radioButton.isChecked() : 
+			readAssetList = self.getSelectedWidgetItem(1)
 
-				for each in readAssetList : 
-					assetName = self.assetInfo[each]['code']
-					namespace = assetName
-					path = self.assetInfo[each]['pullFile']
+		if readAssetList : 
 
-					if path : 
-						if not path in scenePathInfo.keys() : 
-							result = hook.createReference(namespace, path)
+			for each in readAssetList : 
+				assetName = self.assetInfo[each]['code']
+				namespace = assetName
+				path = self.assetInfo[each]['pullFile']
 
-						else : 
-							# asking if want to create another reference
-							title = 'Confirm create multiple reference'
-							description = '%s already exists in the scene, do you still want to create reference?' % assetName
-							result = self.messageBox(title, description)
-
-							if result == QtGui.QMessageBox.Ok : 
-								result = hook.createReference(namespace, path)
+				if path : 
+					if not path in scenePathInfo.keys() : 
+						result = hook.createReference(namespace, path)
 
 					else : 
-						if selOnly : 
-							title = 'Asset not exists'
-							dialog = '%s has no approved, MASTER or published file' % assetName
-							self.completeDialog(title, dialog)
+						# asking if want to create another reference
+						title = 'Confirm create multiple reference'
+						description = '%s already exists in the scene, do you still want to create reference?' % assetName
+						result = self.messageBox(title, description)
+
+						if result == QtGui.QMessageBox.Ok : 
+							result = hook.createReference(namespace, path)
+
+				else : 
+					if selOnly : 
+						title = 'Asset not exists'
+						dialog = '%s has no approved, MASTER or published file' % assetName
+						self.completeDialog(title, dialog)
 
 
 		self.refreshUI()
 
 		# read from list
-		if self.ui.manualBrowser_radioButton.isChecked() : 
-			pass
+		# if self.ui.manualBrowser_radioButton.isChecked() : 
+		# 	readAssetList = self.getSelectedWidgetItem(1)
 
 		
 
@@ -841,6 +881,7 @@ class MyForm(QtGui.QMainWindow):
 		myCustomWidget.setText1(text1)
 		myCustomWidget.setText2(text2)
 		myCustomWidget.setText3(text3)
+		# myCustomWidget.setText4(text4)
 
 		myCustomWidget.setTextColor1(textColors[0])
 		myCustomWidget.setTextColor2(textColors[1])
@@ -858,6 +899,28 @@ class MyForm(QtGui.QMainWindow):
 
 		
 		# QtGui.QApplication.processEvents()
+
+
+	def addListWidgetItem2(self, text1, text2, text3, iconPath, color, textColors, addIcon = 1, size = 90) : 		
+
+		myCustomWidget = customQWidgetItem()
+		myCustomWidget.setText1(text1)
+		myCustomWidget.setText2(text2)
+		myCustomWidget.setText3(text3)
+
+		myCustomWidget.setTextColor1(textColors[0])
+		myCustomWidget.setTextColor2(textColors[1])
+		myCustomWidget.setTextColor3(textColors[2])
+
+		if addIcon : 
+			myCustomWidget.setIcon(iconPath, size)
+
+		item = QtGui.QListWidgetItem(self.ui.list_listWidget)
+
+		item.setSizeHint(myCustomWidget.sizeHint())
+		self.ui.list_listWidget.addItem(item)
+		self.ui.list_listWidget.setItemWidget(item, myCustomWidget)
+		item.setBackground(QtGui.QColor(color[0], color[1], color[2]))
 
 
 	def messageBox(self, title, description) : 
@@ -880,9 +943,11 @@ class customQWidgetItem(QtGui.QWidget) :
 		self.text1Label = QtGui.QLabel()
 		self.text2Label = QtGui.QLabel()
 		self.text3Label = QtGui.QLabel()
+		# self.text4Label = QtGui.QLabel()
 		self.textQVBoxLayout.addWidget(self.text1Label)
 		self.textQVBoxLayout.addWidget(self.text2Label)
 		self.textQVBoxLayout.addWidget(self.text3Label)
+		# self.textQVBoxLayout.addWidget(self.text4Label)
 
 		# set icon
 		self.allLayout = QtGui.QHBoxLayout()
@@ -910,6 +975,10 @@ class customQWidgetItem(QtGui.QWidget) :
 
 	def setText3(self, text) : 
 		self.text3Label.setText(text)
+
+
+	def setText4(self, text) : 
+		self.text4Label.setText(text)
 
 
 	def setTextColor1(self, color) : 

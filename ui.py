@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'U:/extensions/studioTools/python/arxLoader/ui.ui'
 #
-# Created: Sun Dec 28 23:34:07 2014
+# Created: Wed Jan 07 20:24:18 2015
 #      by: pyside-uic 0.2.14 running on PySide 1.2.0
 #
 # WARNING! All changes made in this file will be lost!
@@ -12,7 +12,7 @@ from PySide import QtCore, QtGui
 class Ui_loaderWindow(object):
     def setupUi(self, loaderWindow):
         loaderWindow.setObjectName("loaderWindow")
-        loaderWindow.resize(874, 682)
+        loaderWindow.resize(868, 682)
         self.centralwidget = QtGui.QWidget(loaderWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.frame = QtGui.QFrame(self.centralwidget)
@@ -247,7 +247,7 @@ class Ui_loaderWindow(object):
         self.logo_label.setObjectName("logo_label")
         loaderWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(loaderWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 874, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 868, 21))
         self.menubar.setObjectName("menubar")
         loaderWindow.setMenuBar(self.menubar)
 
