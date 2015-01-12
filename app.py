@@ -71,6 +71,7 @@ class MyForm(QtGui.QMainWindow):
 		self.sceneInfo = None
 		self.shotAssets = None
 		self.viewMode = ['view1_icon.png', 'view2_icon.png', 'view3_icon.png', 'view4_icon.png']
+		self.customWidgetMode = [0, 1]
 
 		# init connections
 		self.initConnections()
@@ -136,12 +137,15 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.remove_pushButton.setVisible(value3)
 		self.ui.clear_pushButton.setVisible(value3)
 		self.ui.search_frame.setVisible(value)
-		self.ui.filter_frame.setVisible(value)
+		self.ui.filter_frame.setVisible(value3)
 		# self.ui.list_frame.setVisible(value3)
 		self.ui.main_label.setText(text)
 		self.ui.projectInfo_frame.setVisible(value2)
 		self.ui.selectedReference_checkBox.setVisible(value2)
 		self.ui.showSceneAsset_checkBox.setVisible(value)
+		self.ui.type_comboBox.setVisible(value)
+		self.ui.type_checkBox.setVisible(value)
+
 
 		# resizing window
 		# self.ui.frame.resize(w, h)
@@ -871,11 +875,10 @@ class MyForm(QtGui.QMainWindow):
 
 	def getSelectedWidgetItem(self, lineText) : 
 		mode = self.ui.viewMode_comboBox.currentIndex()
-		customWidgetMode = [0, 1]
+		allItems = []
 
-		if mode in customWidgetMode : 
+		if mode in self.customWidgetMode : 
 			items = self.ui.main_listWidget.selectedItems()
-			allItems = []
 
 			for item in items : 
 				customWidget = self.ui.main_listWidget.itemWidget(item)
@@ -895,22 +898,28 @@ class MyForm(QtGui.QMainWindow):
 			items = self.ui.main_listWidget.selectedItems()
 
 			for item in items : 
-				customWidget = self.ui.main_listWidget.itemWidget(item)
-
 				if lineText == 1 : 
-					text = customWidget.text1()
+					text = str(item.text())
+
+					allItems.append(text)
 
 		return allItems
 
 
 	def getAllListWidgetItem(self) : 
+		mode = self.ui.viewMode_comboBox.currentIndex()
 		count = self.ui.main_listWidget.count()
 		items = []
 
 		for i in range(count) : 
 			item = self.ui.main_listWidget.item(i)
-			customWidget = self.ui.main_listWidget.itemWidget(item)
-			text1 = customWidget.text1()
+
+			if mode in self.customWidgetMode : 
+				customWidget = self.ui.main_listWidget.itemWidget(item)
+				text1 = customWidget.text1()
+
+			else : 
+				text1 = str(self.ui.main_listWidget.item(i).text())
 
 			items.append(text1)
 
