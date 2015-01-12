@@ -292,7 +292,11 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="search_lineEdit"/>
+       <widget class="QLineEdit" name="search_lineEdit">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -446,6 +450,9 @@
       <property name="selectionMode">
        <enum>QAbstractItemView::ExtendedSelection</enum>
       </property>
+      <property name="viewMode">
+       <enum>QListView::ListMode</enum>
+      </property>
       <property name="sortingEnabled">
        <bool>false</bool>
       </property>
@@ -584,6 +591,22 @@
      </property>
      <property name="text">
       <string/>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="showSceneAsset_checkBox">
+     <property name="geometry">
+      <rect>
+       <x>310</x>
+       <y>440</y>
+       <width>111</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Show only in scene</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
      </property>
     </widget>
    </widget>

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'U:/extensions/studioTools/python/arxLoader/ui.ui'
 #
-# Created: Wed Jan 07 20:24:18 2015
+# Created: Fri Jan 09 23:15:57 2015
 #      by: pyside-uic 0.2.14 running on PySide 1.2.0
 #
 # WARNING! All changes made in this file will be lost!
@@ -152,6 +152,7 @@ class Ui_loaderWindow(object):
         self.label_7.setObjectName("label_7")
         self.horizontalLayout_2.addWidget(self.label_7)
         self.search_lineEdit = QtGui.QLineEdit(self.search_frame)
+        self.search_lineEdit.setText("")
         self.search_lineEdit.setObjectName("search_lineEdit")
         self.horizontalLayout_2.addWidget(self.search_lineEdit)
         self.add_pushButton = QtGui.QPushButton(self.frame)
@@ -204,6 +205,7 @@ class Ui_loaderWindow(object):
         self.main_listWidget.setFont(font)
         self.main_listWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.main_listWidget.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+        self.main_listWidget.setViewMode(QtGui.QListView.ListMode)
         self.main_listWidget.setObjectName("main_listWidget")
         self.createReference_pushButton = QtGui.QPushButton(self.frame_2)
         self.createReference_pushButton.setGeometry(QtCore.QRect(10, 510, 271, 31))
@@ -245,6 +247,10 @@ class Ui_loaderWindow(object):
         self.logo_label.setFont(font)
         self.logo_label.setText("")
         self.logo_label.setObjectName("logo_label")
+        self.showSceneAsset_checkBox = QtGui.QCheckBox(self.frame)
+        self.showSceneAsset_checkBox.setGeometry(QtCore.QRect(310, 440, 111, 17))
+        self.showSceneAsset_checkBox.setChecked(False)
+        self.showSceneAsset_checkBox.setObjectName("showSceneAsset_checkBox")
         loaderWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(loaderWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 868, 21))
@@ -287,4 +293,5 @@ class Ui_loaderWindow(object):
         self.createAllReference_pushButton.setText(QtGui.QApplication.translate("loaderWindow", "Create All References", None, QtGui.QApplication.UnicodeUTF8))
         self.createSelectedReference_pushButton.setText(QtGui.QApplication.translate("loaderWindow", "Create Selected Reference", None, QtGui.QApplication.UnicodeUTF8))
         self.referenceList_label.setText(QtGui.QApplication.translate("loaderWindow", "Reference lists", None, QtGui.QApplication.UnicodeUTF8))
+        self.showSceneAsset_checkBox.setText(QtGui.QApplication.translate("loaderWindow", "Show only in scene", None, QtGui.QApplication.UnicodeUTF8))
 
