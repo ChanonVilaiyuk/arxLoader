@@ -130,3 +130,5 @@ class customQWidgetItem2(QtGui.QWidget) :
 
 	# def text2(self) : 
 	# 	return self.text2Label.text()
+
+

@@ -3,7 +3,7 @@ import maya.mel as mm
 
 import sys, os
 
-from tools.utils import config
+from utils import config
 reload(config)
 
 def getSceneName() : 

@@ -15,16 +15,13 @@ from shiboken import wrapInstance
 
 
 # import ui
-from arxLoader import ui2 as ui
+from arxLoader import ui as ui
 reload(ui)
 
 from arxLoader import mayaHook as hook
 reload(hook)
 
-from arxLoader import customWidget as cw
-reload(cw)
-
-from tools.utils import config, fileUtils
+from utils import config, fileUtils
 reload(config)
 reload(fileUtils)
 
@@ -70,8 +67,6 @@ class MyForm(QtGui.QMainWindow):
 		self.textItemColor = [[200, 200, 200], [120, 120, 120], [100, 100, 100]]
 		self.sceneInfo = None
 		self.shotAssets = None
-		self.viewMode = ['view1_icon.png', 'view2_icon.png', 'view3_icon.png', 'view4_icon.png']
-		self.customWidgetMode = [0]
 
 		# init connections
 		self.initConnections()
@@ -92,7 +87,6 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.main_listWidget.customContextMenuRequested.connect(self.showMenu)
 		self.ui.thumbnail_checkBox.stateChanged.connect(self.refreshUI)
 		self.ui.selectedReference_checkBox.stateChanged.connect(self.setReferenceButton)
-		self.ui.viewMode_comboBox.currentIndexChanged.connect(self.refreshUI)
 
 
 	def initFunctions(self) : 
@@ -137,23 +131,18 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.remove_pushButton.setVisible(value3)
 		self.ui.clear_pushButton.setVisible(value3)
 		self.ui.search_frame.setVisible(value)
-		self.ui.filter_frame.setVisible(value3)
-		# self.ui.list_frame.setVisible(value3)
+		self.ui.filter_frame.setVisible(value)
+		self.ui.list_frame.setVisible(value3)
 		self.ui.main_label.setText(text)
 		self.ui.projectInfo_frame.setVisible(value2)
 		self.ui.selectedReference_checkBox.setVisible(value2)
 		self.ui.showSceneAsset_checkBox.setVisible(value)
-		self.ui.type_comboBox.setVisible(value)
-		self.ui.type_checkBox.setVisible(value)
-
 
 		# resizing window
-		# self.ui.frame.resize(w, h)
-		# self.resize(w + 14, h + 14)
-		# self.ui.logo_label.setGeometry(lPos, 10, 221, 61)
+		self.ui.frame.resize(w, h)
+		self.resize(w + 14, h + 14)
+		self.ui.logo_label.setGeometry(lPos, 10, 221, 61)
 		self.setLogo()
-		self.setViewComboBox()
-
 
 		# button text
 		self.ui.createReference_pushButton.setText(buttonText)
@@ -197,26 +186,6 @@ class MyForm(QtGui.QMainWindow):
 			self.ui.createReference_pushButton.setText('Create All References')
 
 
-
-	def setViewComboBox(self) : 
-		self.ui.viewMode_comboBox.clear()
-		self.ui.viewMode_comboBox.currentIndexChanged.disconnect(self.refreshUI)
-
-		for i in range(len(self.viewMode)) : 
-			iconPath = '%s/%s' % (self.iconPath, self.viewMode[i])
-			self.ui.viewMode_comboBox.addItem('')
-			icon = QtGui.QIcon()
-			icon.addPixmap(QtGui.QPixmap(iconPath), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-			self.ui.viewMode_comboBox.setItemIcon(i, icon)
-
-		# default mode
-		self.ui.viewMode_comboBox.setCurrentIndex(2)
-
-
-		self.ui.viewMode_comboBox.currentIndexChanged.connect(self.refreshUI)
-
-
-
 	# load data ==================================================================================================
 
 
@@ -244,7 +213,7 @@ class MyForm(QtGui.QMainWindow):
 		# U:/projects/ttv/episodes/e100/work/sq010/layout/maya/ttv_e100_010_layout.v002.ma
 		eles = sceneName.replace('%s/' % self.rootProject, '').split('/')
 
-		if len(eles) >= 6 : 
+		if len(eles) > 6 : 
 			episode = eles[0]
 			level = eles[1]
 			sequence = eles[2]
@@ -357,8 +326,6 @@ class MyForm(QtGui.QMainWindow):
 				publishPath = os.path.join(self.assetRoot, 'publish', assetType, parent, variation, 'rig', 'maya').replace('\\', '/')
 				thumbnailPath = os.path.join(self.assetRoot, 'publish', assetType, parent, variation, '_shotgun').replace('\\', '/')
 				thumbnailFile = '%s/%s' % (thumbnailPath, '%s.jpg' % code)
-
-				# check type > parent >
 
 				# pxy file ======================================================
 				aprvPxyFile = '%s/ttv_%s_%s_%s_rig_mr.%s' % (approvedPath, assetType, parent, variation, self.fileExt)
@@ -582,8 +549,6 @@ class MyForm(QtGui.QMainWindow):
 		parents = []
 		variations = []
 
-		filterInfo = dict()
-
 		for each in self.assetInfo : 
 			assetType = self.assetInfo[each]['assetType']
 			parent = self.assetInfo[each]['parent']
@@ -597,11 +562,6 @@ class MyForm(QtGui.QMainWindow):
 
 			if not variation in variations : 
 				variations.append(variation)
-
-			if not assetType in filterInfo.keys() : 
-				filterInfo[assetType] = []
-
-			filterInfo[assetType].append(parent)
 
 		self.ui.type_comboBox.clear()
 
@@ -877,52 +837,34 @@ class MyForm(QtGui.QMainWindow):
 	# utils =================================================================
 
 	def getSelectedWidgetItem(self, lineText) : 
-		mode = self.ui.viewMode_comboBox.currentIndex()
+		items = self.ui.main_listWidget.selectedItems()
 		allItems = []
 
-		if mode in self.customWidgetMode : 
-			items = self.ui.main_listWidget.selectedItems()
+		for item in items : 
+			customWidget = self.ui.main_listWidget.itemWidget(item)
 
-			for item in items : 
-				customWidget = self.ui.main_listWidget.itemWidget(item)
+			if lineText == 1 : 
+				text = customWidget.text1()
 
-				if lineText == 1 : 
-					text = customWidget.text1()
+			if lineText == 2 : 
+				text = customWidget.text2()
 
-				if lineText == 2 : 
-					text = customWidget.text2()
-
-				if lineText == 3 : 
-					text = customWidget.text3()
-				
-				allItems.append(text)
-
-		else : 
-			items = self.ui.main_listWidget.selectedItems()
-
-			for item in items : 
-				if lineText == 1 : 
-					text = str(item.text()).split('\n\r')[0]
-
-					allItems.append(text)
+			if lineText == 3 : 
+				text = customWidget.text3()
+			
+			allItems.append(text)
 
 		return allItems
 
 
 	def getAllListWidgetItem(self) : 
-		mode = self.ui.viewMode_comboBox.currentIndex()
 		count = self.ui.main_listWidget.count()
 		items = []
 
 		for i in range(count) : 
 			item = self.ui.main_listWidget.item(i)
-
-			if mode in self.customWidgetMode : 
-				customWidget = self.ui.main_listWidget.itemWidget(item)
-				text1 = customWidget.text1()
-
-			else : 
-				text1 = str(self.ui.main_listWidget.item(i).text()).split('\n\r')[0]
+			customWidget = self.ui.main_listWidget.itemWidget(item)
+			text1 = customWidget.text1()
 
 			items.append(text1)
 
@@ -948,51 +890,9 @@ class MyForm(QtGui.QMainWindow):
 		return targetFile
 
 
-	def addListWidgetItem(self, text1, text2, text3, iconPath, color, textColors, addIcon = 1, size = 90) : 
+	def addListWidgetItem(self, text1, text2, text3, iconPath, color, textColors, addIcon = 1, size = 90) : 		
 
-		mode = self.ui.viewMode_comboBox.currentIndex()
-
-		# list mode details
-		if mode == 0 : 		
-			self.ui.main_listWidget.setFlow(QtGui.QListView.TopToBottom)
-			self.ui.main_listWidget.setViewMode(QtGui.QListView.ListMode)
-			self.ui.main_listWidget.setGridSize(QtCore.QSize(66, 66))
-			self.ui.main_listWidget.setProperty("isWrapping", False)
-			self.addListWidgetItemListMode(text1, text2, text3, iconPath, color, textColors, addIcon, size)
-
-
-		# list mode small details
-		if mode == 1 : 
-			self.ui.main_listWidget.setFlow(QtGui.QListView.TopToBottom)
-			self.ui.main_listWidget.setViewMode(QtGui.QListView.ListMode)
-			self.ui.main_listWidget.setGridSize(QtCore.QSize(240, 32))
-			self.ui.main_listWidget.setProperty("isWrapping", True)
-			self.addListWidgetItemSmallListMode(text1, text3, iconPath, color, textColors, addIcon, 40)
-
-
-		# icon mode 
-		if mode == 2 : 
-			self.ui.main_listWidget.setFlow(QtGui.QListView.LeftToRight)
-			self.ui.main_listWidget.setViewMode(QtGui.QListView.IconMode)
-			self.ui.main_listWidget.setProperty("isWrapping", True)
-			self.ui.main_listWidget.setGridSize(QtCore.QSize(120, 120))
-			self.addListWidgetItemIconMode(text1, text3, iconPath, color, textColors, addIcon, size)
-
-
-		# text only mode
-		if mode == 3 : 
-			self.ui.main_listWidget.setFlow(QtGui.QListView.TopToBottom)
-			self.ui.main_listWidget.setViewMode(QtGui.QListView.ListMode)
-			self.ui.main_listWidget.setProperty("isWrapping", True)
-			self.ui.main_listWidget.setGridSize(QtCore.QSize(240, 14))
-			self.addListWidgetItemTextOnly(text1, color)
-		
-		# QtGui.QApplication.processEvents()
-
-
-	def addListWidgetItemListMode(self, text1, text2, text3, iconPath, color, textColors, addIcon = 1, size = 90) : 
-
-		myCustomWidget = cw.customQWidgetItem()
+		myCustomWidget = customQWidgetItem()
 		myCustomWidget.setText1(text1)
 		myCustomWidget.setText2(text2)
 		myCustomWidget.setText3(text3)
@@ -1012,58 +912,29 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.main_listWidget.setItemWidget(item, myCustomWidget)
 		item.setBackground(QtGui.QColor(color[0], color[1], color[2]))
 
-
-
-	def addListWidgetItemIconMode(self, text1, text2, iconPath, color, textColors, addIcon = 1, size = 90) : 
-		icon = QtGui.QIcon()
-		icon.addPixmap(QtGui.QPixmap(iconPath),QtGui.QIcon.Normal,QtGui.QIcon.Off)
-
-		font = QtGui.QFont()
-		font.setPointSize(9)
-		font.setBold(False)
-		self.ui.main_listWidget.setFont(font)
-
-		text = '%s\n\r%s' % (text1, text2)
-
-		item = QtGui.QListWidgetItem(self.ui.main_listWidget)
-		item.setIcon(icon)
-		item.setText(text)
-		item.setBackground(QtGui.QColor(color[0], color[1], color[2]))
-		self.ui.main_listWidget.setIconSize(QtCore.QSize(size, size))
-
-
-
-	def addListWidgetItemSmallListMode(self, text1, text2, iconPath, color, textColors, addIcon = 1, size = 90) : 
-
-		icon = QtGui.QIcon()
-		icon.addPixmap(QtGui.QPixmap(iconPath),QtGui.QIcon.Normal,QtGui.QIcon.Off)
-
-		font = QtGui.QFont()
-		font.setPointSize(9)
-		font.setBold(False)
-		self.ui.main_listWidget.setFont(font)
-
-		text = '%s\n\r%s' % (text1, text2)
-
-		item = QtGui.QListWidgetItem(self.ui.main_listWidget)
-		item.setIcon(icon)
-		item.setText(text)
-		item.setBackground(QtGui.QColor(color[0], color[1], color[2]))
-		self.ui.main_listWidget.setIconSize(QtCore.QSize(size, size))
 		
+		# QtGui.QApplication.processEvents()
 
 
-	def addListWidgetItemTextOnly(self, text1, color) : 
+	def addListWidgetItem2(self, text1, text2, text3, iconPath, color, textColors, addIcon = 1, size = 90) : 		
 
-		font = QtGui.QFont()
-		font.setPointSize(9)
-		font.setWeight(75)
-		font.setBold(False)
-		self.ui.main_listWidget.setFont(font)
-		
-		item = QtGui.QListWidgetItem(self.ui.main_listWidget)
+		myCustomWidget = customQWidgetItem()
+		myCustomWidget.setText1(text1)
+		myCustomWidget.setText2(text2)
+		myCustomWidget.setText3(text3)
 
-		item.setText(text1)
+		myCustomWidget.setTextColor1(textColors[0])
+		myCustomWidget.setTextColor2(textColors[1])
+		myCustomWidget.setTextColor3(textColors[2])
+
+		if addIcon : 
+			myCustomWidget.setIcon(iconPath, size)
+
+		item = QtGui.QListWidgetItem(self.ui.list_listWidget)
+
+		item.setSizeHint(myCustomWidget.sizeHint())
+		self.ui.list_listWidget.addItem(item)
+		self.ui.list_listWidget.setItemWidget(item, myCustomWidget)
 		item.setBackground(QtGui.QColor(color[0], color[1], color[2]))
 
 
@@ -1073,12 +944,84 @@ class MyForm(QtGui.QMainWindow):
 		return result
 
 
+
 	def completeDialog(self, title, dialog) : 
 		QtGui.QMessageBox.information(self, title, dialog, QtGui.QMessageBox.Ok)
 
 		
 
+class customQWidgetItem(QtGui.QWidget) : 
+	def __init__(self, parent = None) : 
+		super(customQWidgetItem, self).__init__(parent)
+		# set label 
+		self.textQVBoxLayout = QtGui.QVBoxLayout()
+		self.text1Label = QtGui.QLabel()
+		self.text2Label = QtGui.QLabel()
+		self.text3Label = QtGui.QLabel()
+		# self.text4Label = QtGui.QLabel()
+		self.textQVBoxLayout.addWidget(self.text1Label)
+		self.textQVBoxLayout.addWidget(self.text2Label)
+		self.textQVBoxLayout.addWidget(self.text3Label)
+		# self.textQVBoxLayout.addWidget(self.text4Label)
 
+		# set icon
+		self.allLayout = QtGui.QHBoxLayout()
+		self.iconQLabel = QtGui.QLabel()
+		self.allLayout.addWidget(self.iconQLabel, 0)
+		self.allLayout.addLayout(self.textQVBoxLayout, 1)
+		self.allLayout.setContentsMargins(2, 2, 2, 2)
+		self.setLayout(self.allLayout)
+
+		# set font
+		font = QtGui.QFont()
+		font.setPointSize(9)
+		# font.setWeight(70)
+		font.setBold(True)
+		self.text1Label.setFont(font)
+
+
+	def setText1(self, text) : 
+		self.text1Label.setText(text)
+
+
+	def setText2(self, text) : 
+		self.text2Label.setText(text)
+
+
+	def setText3(self, text) : 
+		self.text3Label.setText(text)
+
+
+	def setText4(self, text) : 
+		self.text4Label.setText(text)
+
+
+	def setTextColor1(self, color) : 
+		self.text1Label.setStyleSheet('color: rgb(%s, %s, %s);' % (color[0], color[1], color[2]))
+
+
+	def setTextColor2(self, color) : 
+		self.text2Label.setStyleSheet('color: rgb(%s, %s, %s);' % (color[0], color[1], color[2]))
+
+
+	def setTextColor3(self, color) : 
+		self.text3Label.setStyleSheet('color: rgb(%s, %s, %s);' % (color[0], color[1], color[2]))
+
+
+	def setIcon(self, iconPath, size) : 
+		self.iconQLabel.setPixmap(QtGui.QPixmap(iconPath).scaled(size, size, QtCore.Qt.KeepAspectRatio))
+
+
+	def text1(self) : 
+		return self.text1Label.text()
+
+
+	def text2(self) : 
+		return self.text2Label.text()
+
+
+	def text3(self) : 
+		return self.text3Label.text()
 
 
 
