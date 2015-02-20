@@ -145,6 +145,7 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.showSceneAsset_checkBox.setVisible(value)
 		self.ui.type_comboBox.setVisible(value)
 		self.ui.type_checkBox.setVisible(value)
+		self.ui.uploadAsset_pushButton.setVisible(value3)
 
 
 		# resizing window
