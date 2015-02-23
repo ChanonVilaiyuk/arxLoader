@@ -72,6 +72,8 @@ class MyForm(QtGui.QMainWindow):
 		self.shotAssets = None
 		self.viewMode = ['view1_icon.png', 'view2_icon.png', 'view3_icon.png', 'view4_icon.png']
 		self.customWidgetMode = [0]
+		self.sgAssetLists = []
+		self.sgShotId = dict()
 
 		# init connections
 		self.initConnections()
@@ -93,6 +95,8 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.thumbnail_checkBox.stateChanged.connect(self.refreshUI)
 		self.ui.selectedReference_checkBox.stateChanged.connect(self.setReferenceButton)
 		self.ui.viewMode_comboBox.currentIndexChanged.connect(self.refreshUI)
+		self.ui.showMayaAsset_checkBox.stateChanged.connect(self.refreshUI)
+		self.ui.uploadAsset_pushButton.clicked.connect(self.uploadShotgun)
 
 
 	def initFunctions(self) : 
@@ -146,6 +150,7 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.type_comboBox.setVisible(value)
 		self.ui.type_checkBox.setVisible(value)
 		self.ui.uploadAsset_pushButton.setVisible(value3)
+		self.ui.showMayaAsset_checkBox.setVisible(value2)
 
 
 		# resizing window
@@ -289,6 +294,7 @@ class MyForm(QtGui.QMainWindow):
 				for eachShot in shots : 
 					if shotCode == eachShot['code'] : 
 						assets = eachShot['assets']
+						self.sgShotId = {'code': shotCode, 'id': eachShot['id']}
 
 						return assets
 
@@ -466,10 +472,15 @@ class MyForm(QtGui.QMainWindow):
 		missingCount = 0
 		i = 0
 		info = []
+		sgPullFiles = []
 		addIcon = 0
 		textColors = self.textItemColor
+		message = str()
+		sgAssets = []
 
 		scenePathInfo = self.getSceneAssets()
+
+		assetInfo = self.assetInfo
 
 
 		if self.ui.thumbnail_checkBox.isChecked() : 
@@ -480,12 +491,14 @@ class MyForm(QtGui.QMainWindow):
 			
 			if each['name'] in self.assetInfo.keys() : 
 				pullFile = self.assetInfo[each['name']]['pullFile']
+				sgPullFiles.append(pullFile)
 				fileType = self.assetInfo[each['name']]['fileType']
 				# display = '%s - %s' % (self.assetInfo[each['name']]['code'], fileType)
 				display = '%s' % (self.assetInfo[each['name']]['code'])
 				color = [100, 0, 0]
 				thumbnailFile = self.assetInfo[each['name']]['thumbnailFile']
 				iconPath = self.noPreviewIcon
+				sgAssets.append(display)
 
 				numberDisplay = 'In scene x 0'
 				number = 0
@@ -528,7 +541,80 @@ class MyForm(QtGui.QMainWindow):
 
 				self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, size = 90)
 
+				if not self.assetInfo[each['name']] in self.sgAssetLists : 
+					self.sgAssetLists.append(self.assetInfo[each['name']])
+
 			i+=1
+
+		# list not in shotgun ==============================================================================================
+
+		self.ui.uploadAsset_pushButton.setVisible(False)
+
+		if self.ui.showMayaAsset_checkBox.isChecked() : 
+			
+			assetCount = 0
+			for each in sorted(assetInfo.keys()) : 
+				display = each
+				fileType = assetInfo[each]['fileType']
+				pullFile = assetInfo[each]['pullFile']
+				assetType = assetInfo[each]['assetType']
+				thumbnailFile = assetInfo[each]['thumbnailFile']
+				iconPath = self.noPreviewIcon
+				numberDisplay = 'In scene x 0'
+				number = 0
+				assetNo = 100
+
+				# if maya asset not already in the list
+				if not display in sgAssets : 
+
+					if pullFile in scenePathInfo.keys() : 
+						number = scenePathInfo[pullFile]['number']
+
+					if number : 
+						numberDisplay = 'In scene x %s' % number
+
+						if os.path.exists(thumbnailFile) : 
+							iconPath = thumbnailFile
+
+
+						if fileType == 'approved' : 
+							color = [200, 100, 0]
+							aprvCount+=1
+
+						if fileType == 'master' : 
+							color = [200, 100, 0]
+							masterCount+=1
+
+						if fileType == 'publish' : 
+							color = [200, 100, 0]
+							publishCount+=1
+
+						if fileType == 'No File' : 
+							color = [100, 0, 0]
+							missingCount+=1
+						
+
+						textColors[2] = [200, 100, 100]
+
+						if number > 0 : 
+							textColors[2] = [100, 200, 0]
+
+						if number == 0 : 
+							textColors[2] = [200, 200, 0]
+
+						self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, 90)
+						assetCount+=1
+
+						if not assetInfo[each] in self.sgAssetLists : 
+							self.sgAssetLists.append(assetInfo[each])
+
+				if assetCount > 0 : 
+					message = '%s assets Not in shotgun' % assetCount
+					self.ui.uploadAsset_pushButton.setVisible(True)
+
+				if assetCount == 0 : 
+					message = 'All assets in shotgun'
+
 
 
 		info.append('	%s 	approved asset' % aprvCount)
@@ -537,6 +623,7 @@ class MyForm(QtGui.QMainWindow):
 		info.append('	-----------------------------------')
 		info.append('	%s/%s available (%s Missing)' % ((aprvCount + masterCount + publishCount), i, missingCount))
 		info.append('')
+		info.append(message)
 		displayInfo = ('\n\r').join(info)
 
 		print '%s asset missing' % missingCount
@@ -859,6 +946,14 @@ class MyForm(QtGui.QMainWindow):
 			namespace = hook.getNamespace(each)
 			path = each.split('{')[0]
 			number = 1
+			display = str()
+			fileType = str()
+
+			# get display by extracting file name
+			try : 
+				display = ('_').join(os.path.basename(path).split('_')[2:4])
+			except : 
+				pass
 
 			if not path in paths : 
 				paths.append(path)
@@ -866,13 +961,53 @@ class MyForm(QtGui.QMainWindow):
 			else : 
 				number = sceneAssetPathInfo[path]['number'] + 1
 
-			sceneAssetPathInfo[path] = {'namespace': namespace, 'number': number}
+
+			# get file type
+			# approved ==================================
+			if '/approved/' in path : 
+				fileType = 'approved'
+
+			if '/publish/' in path : 
+				# master ==============================
+				if 'MASTER.ma' in path : 
+					fileType = 'master'
+
+				# publish ==============================
+				else : 
+					fileType = 'publish'
+
+			# get thumbnail
+
+
+			sceneAssetPathInfo[path] = {'namespace': namespace, 'number': number, 'display': display, 'fileType': fileType}
 
 		return sceneAssetPathInfo
 
 
 
+	''' upload asset not in the list to shotgun '''
 
+	def uploadShotgun(self) : 
+
+		assets = []
+		shotID = self.sgShotId['id']
+
+		for each in self.sgAssetLists : 
+			assets.append({'type': 'Asset', 'id': each['id']})
+
+		result = self.messageBox('Confirm', 'Update assets list to Shotgun?')
+
+		if result : 
+			self.ui.information_label.setText('Updating shotgun ...')
+			QtGui.QApplication.processEvents()
+
+			data = {'assets': assets}
+			result2 = sgUtils.sg.update('Shot', shotID, data)
+
+			if result2 : 
+				self.loadData()
+				self.refreshUI()
+				self.completeDialog('Complete', 'Update assets list to shotgun complete')
 
 
 	# utils =================================================================

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'U:/extensions/studioTools/python/arxLoader/ui2.ui'
 #
-# Created: Fri Feb 20 22:56:31 2015
+# Created: Mon Feb 23 21:03:22 2015
 #      by: pyside-uic 0.2.14 running on PySide 1.2.0
 #
 # WARNING! All changes made in this file will be lost!
@@ -12,7 +12,8 @@ from PySide import QtCore, QtGui
 class Ui_loaderWindow(object):
     def setupUi(self, loaderWindow):
         loaderWindow.setObjectName("loaderWindow")
-        loaderWindow.resize(606, 738)
+        loaderWindow.resize(800, 700)
+        loaderWindow.setMinimumSize(QtCore.QSize(800, 0))
         self.centralwidget = QtGui.QWidget(loaderWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.horizontalLayout_3 = QtGui.QHBoxLayout(self.centralwidget)
@@ -60,6 +61,9 @@ class Ui_loaderWindow(object):
         self.type_comboBox.setEnabled(False)
         self.type_comboBox.setObjectName("type_comboBox")
         self.horizontalLayout_6.addWidget(self.type_comboBox)
+        self.showMayaAsset_checkBox = QtGui.QCheckBox(self.frame_6)
+        self.showMayaAsset_checkBox.setObjectName("showMayaAsset_checkBox")
+        self.horizontalLayout_6.addWidget(self.showMayaAsset_checkBox)
         self.label_4 = QtGui.QLabel(self.frame_6)
         font = QtGui.QFont()
         font.setWeight(50)
@@ -77,8 +81,8 @@ class Ui_loaderWindow(object):
         self.horizontalLayout_6.addWidget(self.viewMode_comboBox)
         self.horizontalLayout_6.setStretch(0, 1)
         self.horizontalLayout_6.setStretch(1, 2)
-        self.horizontalLayout_6.setStretch(2, 1)
         self.horizontalLayout_6.setStretch(3, 1)
+        self.horizontalLayout_6.setStretch(4, 1)
         self.verticalLayout_3.addWidget(self.frame_6)
         self.frame_2 = QtGui.QFrame(self.frame_5)
         self.frame_2.setMinimumSize(QtCore.QSize(291, 520))
@@ -135,6 +139,17 @@ class Ui_loaderWindow(object):
         self.verticalLayout.addLayout(self.horizontalLayout_4)
         self.uploadAsset_pushButton = QtGui.QPushButton(self.frame_2)
         self.uploadAsset_pushButton.setMinimumSize(QtCore.QSize(0, 26))
+        palette = QtGui.QPalette()
+        brush = QtGui.QBrush(QtGui.QColor(162, 79, 46))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Button, brush)
+        brush = QtGui.QBrush(QtGui.QColor(162, 79, 46))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Button, brush)
+        brush = QtGui.QBrush(QtGui.QColor(162, 79, 46))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Button, brush)
+        self.uploadAsset_pushButton.setPalette(palette)
         self.uploadAsset_pushButton.setObjectName("uploadAsset_pushButton")
         self.verticalLayout.addWidget(self.uploadAsset_pushButton)
         self.createReference_pushButton = QtGui.QPushButton(self.frame_2)
@@ -245,6 +260,7 @@ class Ui_loaderWindow(object):
         self.step_label.setObjectName("step_label")
         self.gridLayout.addWidget(self.step_label, 0, 1, 1, 1)
         self.gridLayout.setColumnStretch(0, 1)
+        self.gridLayout.setColumnStretch(1, 2)
         self.inforamtion_frame = QtGui.QFrame(self.frame_4)
         self.inforamtion_frame.setGeometry(QtCore.QRect(9, 175, 233, 138))
         self.inforamtion_frame.setMinimumSize(QtCore.QSize(233, 138))
@@ -260,7 +276,7 @@ class Ui_loaderWindow(object):
         self.label_15.setFont(font)
         self.label_15.setObjectName("label_15")
         self.information_label = QtGui.QLabel(self.inforamtion_frame)
-        self.information_label.setGeometry(QtCore.QRect(10, 30, 211, 91))
+        self.information_label.setGeometry(QtCore.QRect(10, 30, 211, 101))
         font = QtGui.QFont()
         font.setPointSize(9)
         font.setWeight(50)
@@ -325,7 +341,7 @@ class Ui_loaderWindow(object):
         self.horizontalLayout_3.addWidget(self.frame)
         loaderWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(loaderWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 606, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
         self.menubar.setObjectName("menubar")
         loaderWindow.setMenuBar(self.menubar)
 
@@ -340,6 +356,7 @@ class Ui_loaderWindow(object):
         self.shotgun_radioButton.setText(QtGui.QApplication.translate("loaderWindow", "Shotgun shot assets", None, QtGui.QApplication.UnicodeUTF8))
         self.manualBrowser_radioButton.setText(QtGui.QApplication.translate("loaderWindow", "Manual Browser", None, QtGui.QApplication.UnicodeUTF8))
         self.type_checkBox.setText(QtGui.QApplication.translate("loaderWindow", "Type", None, QtGui.QApplication.UnicodeUTF8))
+        self.showMayaAsset_checkBox.setText(QtGui.QApplication.translate("loaderWindow", "Shot asset not in Shotgun", None, QtGui.QApplication.UnicodeUTF8))
         self.label_4.setText(QtGui.QApplication.translate("loaderWindow", "View Mode", None, QtGui.QApplication.UnicodeUTF8))
         self.main_label.setText(QtGui.QApplication.translate("loaderWindow", "Shotgun Asset List", None, QtGui.QApplication.UnicodeUTF8))
         self.main_listWidget.setSortingEnabled(False)
