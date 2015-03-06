@@ -451,7 +451,6 @@ class MyForm(QtGui.QMainWindow):
 			else : 
 				self.ui.main_listWidget.clear()
 				self.ui.information_label.setText('No Shotgun data')
-				self.listShotAsset(self.shotAssets)
 
 		if mode == 'browser' : 
 
@@ -560,21 +559,11 @@ class MyForm(QtGui.QMainWindow):
 		if self.ui.showMayaAsset_checkBox.isChecked() : 
 			
 			assetCount = 0
-			print 'assetInfo', assetInfo
 			for each in sorted(assetInfo.keys()) : 
 				display = each
 				fileType = assetInfo[each]['fileType']
 				pullFile = assetInfo[each]['pullFile']
-				aprvFile = assetInfo[each]['aprvFile']
-				masterFile = assetInfo[each]['masterFile']
-				publishPath = assetInfo[each]['publishPath']
-				aprvPxyFile = assetInfo[each]['aprvPxyFile']
-				masterPxyFile = assetInfo[each]['masterPxyFile']
-
-				fileCheckList = [pullFile, aprvFile, masterFile, publishPath, aprvPxyFile, masterPxyFile]
-
-
-
+				assetType = assetInfo[each]['assetType']
 				thumbnailFile = assetInfo[each]['thumbnailFile']
 				iconPath = self.noPreviewIcon
 				numberDisplay = 'In scene x 0'
@@ -583,11 +572,9 @@ class MyForm(QtGui.QMainWindow):
 
 				# if maya asset not already in the list
 				if not display in sgAssets : 
-					print display
 
 					if pullFile in scenePathInfo.keys() : 
 						number = scenePathInfo[pullFile]['number']
-						
 
 					if number : 
 						numberDisplay = 'In scene x %s' % number
@@ -743,7 +730,6 @@ class MyForm(QtGui.QMainWindow):
 
 		# get in scene reference
 		scenePathInfo = self.getSceneAssets()
-		print 'in scene %s' % scenePathInfo
 
 		self.ui.main_listWidget.clear()
 		color = [100, 0, 0]

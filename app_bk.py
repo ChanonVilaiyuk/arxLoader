@@ -97,17 +97,12 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.viewMode_comboBox.currentIndexChanged.connect(self.refreshUI)
 		self.ui.showMayaAsset_checkBox.stateChanged.connect(self.refreshUI)
 		self.ui.uploadAsset_pushButton.clicked.connect(self.uploadShotgun)
-		self.ui.asset_tabWidget.currentChanged.connect(self.listAllAsset)
 
 
 	def initFunctions(self) : 
 		# set the correct layout window
 		self.loadData()
 		self.setWindowMode()
-
-
-	def test(self) : 
-		print 'tab call'
 		
 
 
@@ -152,11 +147,10 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.projectInfo_frame.setVisible(value2)
 		self.ui.selectedReference_checkBox.setVisible(value2)
 		self.ui.showSceneAsset_checkBox.setVisible(value)
-		self.ui.type_comboBox.setVisible(value3)
-		self.ui.type_checkBox.setVisible(value3)
+		self.ui.type_comboBox.setVisible(value)
+		self.ui.type_checkBox.setVisible(value)
 		self.ui.uploadAsset_pushButton.setVisible(value3)
 		self.ui.showMayaAsset_checkBox.setVisible(value2)
-		self.ui.asset_tabWidget.setVisible(value)
 
 
 		# resizing window
@@ -451,7 +445,6 @@ class MyForm(QtGui.QMainWindow):
 			else : 
 				self.ui.main_listWidget.clear()
 				self.ui.information_label.setText('No Shotgun data')
-				self.listShotAsset(self.shotAssets)
 
 		if mode == 'browser' : 
 
@@ -560,21 +553,11 @@ class MyForm(QtGui.QMainWindow):
 		if self.ui.showMayaAsset_checkBox.isChecked() : 
 			
 			assetCount = 0
-			print 'assetInfo', assetInfo
 			for each in sorted(assetInfo.keys()) : 
 				display = each
 				fileType = assetInfo[each]['fileType']
 				pullFile = assetInfo[each]['pullFile']
-				aprvFile = assetInfo[each]['aprvFile']
-				masterFile = assetInfo[each]['masterFile']
-				publishPath = assetInfo[each]['publishPath']
-				aprvPxyFile = assetInfo[each]['aprvPxyFile']
-				masterPxyFile = assetInfo[each]['masterPxyFile']
-
-				fileCheckList = [pullFile, aprvFile, masterFile, publishPath, aprvPxyFile, masterPxyFile]
-
-
-
+				assetType = assetInfo[each]['assetType']
 				thumbnailFile = assetInfo[each]['thumbnailFile']
 				iconPath = self.noPreviewIcon
 				numberDisplay = 'In scene x 0'
@@ -583,11 +566,9 @@ class MyForm(QtGui.QMainWindow):
 
 				# if maya asset not already in the list
 				if not display in sgAssets : 
-					print display
 
 					if pullFile in scenePathInfo.keys() : 
 						number = scenePathInfo[pullFile]['number']
-						
 
 					if number : 
 						numberDisplay = 'In scene x %s' % number
@@ -737,13 +718,9 @@ class MyForm(QtGui.QMainWindow):
 		assetTypeKw = str(self.ui.type_comboBox.currentText())
 		parentKw = str(self.ui.parent_comboBox.currentText())
 		variationKw = str(self.ui.variation_comboBox.currentText())
-		currentTab = self.ui.asset_tabWidget.currentIndex()
-		currentTabName = str(self.ui.asset_tabWidget.tabText(currentTab))
-
 
 		# get in scene reference
 		scenePathInfo = self.getSceneAssets()
-		print 'in scene %s' % scenePathInfo
 
 		self.ui.main_listWidget.clear()
 		color = [100, 0, 0]
@@ -772,8 +749,6 @@ class MyForm(QtGui.QMainWindow):
 			number = 0
 			assetNo = 100
 
-
-
 			if pullFile in scenePathInfo.keys() : 
 				number = scenePathInfo[pullFile]['number']
 
@@ -794,12 +769,6 @@ class MyForm(QtGui.QMainWindow):
 
 			if self.ui.showSceneAsset_checkBox.isChecked() : 
 				assetNo = number
-
-			if currentTabName == 'all' : 
-				assetTypeKw = assetType
-
-			else : 
-				assetTypeKw = currentTabName
 
 
 			if kw in each : 			
