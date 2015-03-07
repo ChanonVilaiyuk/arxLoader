@@ -385,6 +385,7 @@ class MyForm(QtGui.QMainWindow):
 				# mr file ========================================================
 				aprvFile = '%s/ttv_%s_%s_%s_rig_mr.%s' % (approvedPath, assetType, parent, variation, self.fileExt)
 				masterFile = '%s/ttv_%s_%s_%s_rig_mr.MASTER.%s' % (publishPath, assetType, parent, variation, self.fileExt)
+				masterFile2 = '%s/ttv_%s_%s_%s_rig_mr_MASTER.%s' % (publishPath, assetType, parent, variation, self.fileExt)
 
 				maxPublishFile = self.findMaxVersion(publishPath, 'ttv_%s_%s_%s_rig_mr' % (assetType, parent, variation), self.fileExt)
 
@@ -412,6 +413,10 @@ class MyForm(QtGui.QMainWindow):
 
 				elif os.path.exists(masterFile) : 
 					pullFile = masterFile
+					fileType = 'master'
+
+				elif os.path.exists(masterFile2) : 
+					pullFile = masterFile2
 					fileType = 'master'
 
 				elif os.path.exists(publishFile) : 
@@ -498,20 +503,30 @@ class MyForm(QtGui.QMainWindow):
 			
 			if each['name'] in self.assetInfo.keys() : 
 				pullFile = self.assetInfo[each['name']]['pullFile']
-				sgPullFiles.append(pullFile)
+				aprvFile = self.assetInfo[each['name']]['aprvFile']
+				masterFile = self.assetInfo[each['name']]['masterFile']
+				publishPath = self.assetInfo[each['name']]['publishPath']
+				aprvPxyFile = self.assetInfo[each['name']]['aprvPxyFile']
+				masterPxyFile = self.assetInfo[each['name']]['masterPxyFile']
 				fileType = self.assetInfo[each['name']]['fileType']
 				# display = '%s - %s' % (self.assetInfo[each['name']]['code'], fileType)
 				display = '%s' % (self.assetInfo[each['name']]['code'])
-				color = [100, 0, 0]
 				thumbnailFile = self.assetInfo[each['name']]['thumbnailFile']
+				
+				color = [100, 0, 0]
 				iconPath = self.noPreviewIcon
 				sgAssets.append(display)
+				sgPullFiles.append(pullFile)
+				fileCheckList = [pullFile, aprvFile, masterFile, publishPath, aprvPxyFile, masterPxyFile]
 
 				numberDisplay = 'In scene x 0'
 				number = 0
 
-				if pullFile in scenePathInfo.keys() : 
-					number = scenePathInfo[pullFile]['number']
+				for checkFile in fileCheckList : 
+					if checkFile in scenePathInfo.keys() : 
+						number = scenePathInfo[checkFile]['number']
+
+
 					
 				if number : 
 					numberDisplay = 'In scene x %s' % number
@@ -560,7 +575,7 @@ class MyForm(QtGui.QMainWindow):
 		if self.ui.showMayaAsset_checkBox.isChecked() : 
 			
 			assetCount = 0
-			print 'assetInfo', assetInfo
+
 			for each in sorted(assetInfo.keys()) : 
 				display = each
 				fileType = assetInfo[each]['fileType']
@@ -583,11 +598,12 @@ class MyForm(QtGui.QMainWindow):
 
 				# if maya asset not already in the list
 				if not display in sgAssets : 
-					print display
 
-					if pullFile in scenePathInfo.keys() : 
-						number = scenePathInfo[pullFile]['number']
-						
+					for checkFile in fileCheckList : 
+
+						if checkFile in scenePathInfo.keys() : 
+							number = scenePathInfo[checkFile]['number']
+
 
 					if number : 
 						numberDisplay = 'In scene x %s' % number
@@ -763,10 +779,16 @@ class MyForm(QtGui.QMainWindow):
 		for each in sorted(assetInfo.keys()) : 
 			fileType = assetInfo[each]['fileType']
 			pullFile = assetInfo[each]['pullFile']
+			aprvFile = assetInfo[each]['aprvFile']
+			masterFile = assetInfo[each]['masterFile']
+			publishPath = assetInfo[each]['publishPath']
+			aprvPxyFile = assetInfo[each]['aprvPxyFile']
+			masterPxyFile = assetInfo[each]['masterPxyFile']
 			assetType = assetInfo[each]['assetType']
 			parent = assetInfo[each]['parent']
 			variation = assetInfo[each]['variation']
 			thumbnailFile = assetInfo[each]['thumbnailFile']
+			fileCheckList = [pullFile, aprvFile, masterFile, publishPath, aprvPxyFile, masterPxyFile]
 			iconPath = self.noPreviewIcon
 			numberDisplay = 'In scene x 0'
 			number = 0
@@ -774,8 +796,10 @@ class MyForm(QtGui.QMainWindow):
 
 
 
-			if pullFile in scenePathInfo.keys() : 
-				number = scenePathInfo[pullFile]['number']
+			for checkFile in fileCheckList : 
+				if checkFile in scenePathInfo.keys() : 
+					number = scenePathInfo[checkFile]['number']
+					
 
 			if number : 
 				numberDisplay = 'In scene x %s' % number
