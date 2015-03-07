@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'U:/extensions/studioTools/python/arxLoader/ui3.ui'
 #
-# Created: Tue Feb 24 22:59:36 2015
+# Created: Sat Mar 07 11:31:45 2015
 #      by: pyside-uic 0.2.14 running on PySide 1.2.0
 #
 # WARNING! All changes made in this file will be lost!
@@ -91,13 +91,23 @@ class Ui_loaderWindow(object):
         self.frame_2.setObjectName("frame_2")
         self.verticalLayout = QtGui.QVBoxLayout(self.frame_2)
         self.verticalLayout.setObjectName("verticalLayout")
+        self.horizontalLayout_5 = QtGui.QHBoxLayout()
+        self.horizontalLayout_5.setObjectName("horizontalLayout_5")
         self.main_label = QtGui.QLabel(self.frame_2)
         font = QtGui.QFont()
         font.setWeight(75)
         font.setBold(True)
         self.main_label.setFont(font)
         self.main_label.setObjectName("main_label")
-        self.verticalLayout.addWidget(self.main_label)
+        self.horizontalLayout_5.addWidget(self.main_label)
+        self.extra_label = QtGui.QLabel(self.frame_2)
+        self.extra_label.setText("")
+        self.extra_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.extra_label.setObjectName("extra_label")
+        self.horizontalLayout_5.addWidget(self.extra_label)
+        self.horizontalLayout_5.setStretch(0, 2)
+        self.horizontalLayout_5.setStretch(1, 1)
+        self.verticalLayout.addLayout(self.horizontalLayout_5)
         self.verticalLayout_7 = QtGui.QVBoxLayout()
         self.verticalLayout_7.setSpacing(0)
         self.verticalLayout_7.setObjectName("verticalLayout_7")
@@ -331,8 +341,8 @@ class Ui_loaderWindow(object):
         self.gridLayout.setColumnStretch(0, 1)
         self.gridLayout.setColumnStretch(1, 2)
         self.inforamtion_frame = QtGui.QFrame(self.frame_4)
-        self.inforamtion_frame.setGeometry(QtCore.QRect(9, 175, 233, 138))
-        self.inforamtion_frame.setMinimumSize(QtCore.QSize(233, 138))
+        self.inforamtion_frame.setGeometry(QtCore.QRect(9, 175, 233, 152))
+        self.inforamtion_frame.setMinimumSize(QtCore.QSize(233, 148))
         self.inforamtion_frame.setMaximumSize(QtCore.QSize(233, 138))
         self.inforamtion_frame.setFrameShape(QtGui.QFrame.Box)
         self.inforamtion_frame.setFrameShadow(QtGui.QFrame.Sunken)
@@ -345,7 +355,7 @@ class Ui_loaderWindow(object):
         self.label_15.setFont(font)
         self.label_15.setObjectName("label_15")
         self.information_label = QtGui.QLabel(self.inforamtion_frame)
-        self.information_label.setGeometry(QtCore.QRect(10, 30, 211, 101))
+        self.information_label.setGeometry(QtCore.QRect(10, 30, 211, 111))
         font = QtGui.QFont()
         font.setPointSize(9)
         font.setWeight(50)

@@ -195,6 +195,7 @@ class MyForm(QtGui.QMainWindow):
 
 		# set all UI
 		self.ui.information_label.setText('Processing ...')
+		self.ui.extra_label.setVisible(False)
 		QtGui.QApplication.processEvents()
 		self.setUI(mode)
 
@@ -455,7 +456,6 @@ class MyForm(QtGui.QMainWindow):
 
 			else : 
 				self.ui.main_listWidget.clear()
-				self.ui.information_label.setText('No Shotgun data')
 				self.listShotAsset(self.shotAssets)
 
 		if mode == 'browser' : 
@@ -651,6 +651,14 @@ class MyForm(QtGui.QMainWindow):
 					message = 'All assets in shotgun'
 
 
+		if not assets : 
+			# self.ui.information_label.setText('No Shotgun data')
+			self.ui.extra_label.setVisible(True)
+			self.ui.extra_label.setText('No Shotgun data')
+			self.ui.extra_label.setStyleSheet('background-color: rgb(200, 40, 0)')
+
+		else : 
+			self.ui.extra_label.setText('')
 
 		info.append('	%s 	approved asset' % aprvCount)
 		info.append('	%s 	master asset' % masterCount)
@@ -799,7 +807,6 @@ class MyForm(QtGui.QMainWindow):
 			for checkFile in fileCheckList : 
 				if checkFile in scenePathInfo.keys() : 
 					number = scenePathInfo[checkFile]['number']
-					
 
 			if number : 
 				numberDisplay = 'In scene x %s' % number
@@ -859,6 +866,8 @@ class MyForm(QtGui.QMainWindow):
 								self.addListWidgetItem(each, fileType, numberDisplay, iconPath, color, textColors, addIcon, 90)
 								assetCount+=1
 
+		self.ui.extra_label.setText('')
+
 		info.append('	%s	assets' % assetCount)
 		info.append('	---------------------------------')
 		info.append('	%s 	approved asset' % aprvCount)
@@ -909,8 +918,10 @@ class MyForm(QtGui.QMainWindow):
 
 
 	def menuCommand(self, command, listWidget) : 
-		cmd = 'self.ui.%s.currentItem().text()' % listWidget
-		item = str(eval(cmd))
+		# cmd = 'self.ui.%s.currentItem().text()' % listWidget
+		# item = str(eval(cmd))
+
+		item = self.getSelectedWidgetItem(1)[0]
 
 		if ' - ' in item : 
 			item = item.split(' - ')[0]
