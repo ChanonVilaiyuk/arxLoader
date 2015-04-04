@@ -375,8 +375,9 @@ class MyForm(QtGui.QMainWindow):
 				# check type > parent >
 
 				# pxy file ======================================================
-				aprvPxyFile = '%s/ttv_%s_%s_%s_rig_mr.%s' % (approvedPath, assetType, parent, variation, self.fileExt)
-				masterPxyFile = '%s/ttv_%s_%s_%s_rig_mr.MASTER.%s' % (publishPath, assetType, parent, variation, self.fileExt)
+				aprvPxyFile = '%s/ttv_%s_%s_%s_rig_pxy.%s' % (approvedPath, assetType, parent, variation, self.fileExt)
+				masterPxyFile = '%s/ttv_%s_%s_%s_rig_pxy.MASTER.%s' % (publishPath, assetType, parent, variation, self.fileExt)
+				masterPxyFile2 = '%s/ttv_%s_%s_%s_rig_pxy_MASTER.%s' % (publishPath, assetType, parent, variation, self.fileExt)
 
 				maxPublishPxyFile = self.findMaxVersion(publishPath, 'ttv_%s_%s_%s_rig_pxy' % (assetType, parent, variation), self.fileExt)
 
@@ -395,20 +396,11 @@ class MyForm(QtGui.QMainWindow):
 
 				# ================================================================
 
-				# check apprv -> master -> publishVersion 
-				if os.path.exists(aprvPxyFile) : 
-					pullFile = aprvPxyFile
-					fileType = 'approved'
+				# generic file name
+				genericFile = '%s/ttv_%s_%s_%s_rig' % (publishPath, assetType, parent, variation)
 
-				elif os.path.exists(masterPxyFile) : 
-					pullFile = masterPxyFile
-					fileType = 'master'
-
-				elif os.path.exists(publishPxyFile) : 
-					pullFile = publishPxyFile
-					fileType = 'publish'
-
-				elif os.path.exists(aprvFile) : 
+				# check apprv -> master -> publishVersion g
+				if os.path.exists(aprvFile) : 
 					pullFile = aprvFile
 					fileType = 'approved'
 
@@ -424,6 +416,23 @@ class MyForm(QtGui.QMainWindow):
 					pullFile = publishFile
 					fileType = 'publish'
 
+				elif os.path.exists(aprvPxyFile) : 
+					pullFile = aprvPxyFile
+					fileType = 'approved'
+
+				elif os.path.exists(masterPxyFile) : 
+					pullFile = masterPxyFile
+					fileType = 'master'
+
+				elif os.path.exists(masterPxyFile2) : 
+					pullFile = masterPxyFile2
+					fileType = 'master'
+
+				elif os.path.exists(publishPxyFile) : 
+					pullFile = publishPxyFile
+					fileType = 'publish'
+
+
 				else : 
 					print '%s has no assosiated file' % code
 
@@ -431,13 +440,39 @@ class MyForm(QtGui.QMainWindow):
 				print 'Missing field %s %s %s' % (assetType, parent, variation)
 
 
-			assetInfo[code] = {'id': id, 'code': code, 'assetType': assetType, 'parent': parent, 'variation': variation, 'pullFile': pullFile, 'fileType': fileType, 'aprvFile': aprvFile, 'masterFile': masterFile, 'publishPath': publishPath, 'aprvPxyFile': aprvPxyFile, 'masterPxyFile': masterPxyFile, 'thumbnailFile': thumbnailFile, 'image': image}
+			assetInfo[code] = {'id': id,
+								'code': code, 
+								'assetType': assetType, 
+								'parent': parent, 
+								'variation': variation, 
+								'pullFile': pullFile, 
+								'fileType': fileType, 
+								'aprvFile': aprvFile, 
+								'masterFile': masterFile, 
+								'masterFile2': masterFile2, 
+								'publishPath': publishPath, 
+								'aprvPxyFile': aprvPxyFile, 
+								'masterPxyFile': masterPxyFile, 
+								'masterPxyFile2': masterPxyFile2, 
+								'genericFile': genericFile,
+								'thumbnailFile': thumbnailFile, 
+								'image': image
+								}
 
 		return assetInfo
 
 
 			# U:\projects\ttv\assets\approved\charmain\angela\base\rig\maya\ttv_charmain_angela_base_rig_mr.v004.ma
 			# "U:\projects\ttv\assets\publish\charmain\angela\base\rig\maya\ttv_charmain_angela_base_rig_mr.MASTER.ma"
+
+
+	def simplifyPath(self, path) : 
+		# U:/projects/ttv/assets/publish/charmain/hank/base/rig/maya/ttv_charmain_hank_base_rig_mr.MASTER.ma{1}
+		# cut asset name from _rig_, keep generic name without level (mr/pxy)
+
+		path = '%s_rig' % path.split('_rig_')[0]
+
+		return path
 
 
 	# set UI =======================================================================================================
@@ -499,74 +534,80 @@ class MyForm(QtGui.QMainWindow):
 			addIcon = 1
 
 
-		for each in assets : 
+		if assets : 
+			for each in assets : 
 			
-			if each['name'] in self.assetInfo.keys() : 
-				pullFile = self.assetInfo[each['name']]['pullFile']
-				aprvFile = self.assetInfo[each['name']]['aprvFile']
-				masterFile = self.assetInfo[each['name']]['masterFile']
-				publishPath = self.assetInfo[each['name']]['publishPath']
-				aprvPxyFile = self.assetInfo[each['name']]['aprvPxyFile']
-				masterPxyFile = self.assetInfo[each['name']]['masterPxyFile']
-				fileType = self.assetInfo[each['name']]['fileType']
-				# display = '%s - %s' % (self.assetInfo[each['name']]['code'], fileType)
-				display = '%s' % (self.assetInfo[each['name']]['code'])
-				thumbnailFile = self.assetInfo[each['name']]['thumbnailFile']
-				
-				color = [100, 0, 0]
-				iconPath = self.noPreviewIcon
-				sgAssets.append(display)
-				sgPullFiles.append(pullFile)
-				fileCheckList = [pullFile, aprvFile, masterFile, publishPath, aprvPxyFile, masterPxyFile]
-
-				numberDisplay = 'In scene x 0'
-				number = 0
-
-				for checkFile in fileCheckList : 
-					if checkFile in scenePathInfo.keys() : 
-						number = scenePathInfo[checkFile]['number']
-
-
+				if each['name'] in self.assetInfo.keys() : 
+					pullFile = self.assetInfo[each['name']]['pullFile']
+					aprvFile = self.assetInfo[each['name']]['aprvFile']
+					masterFile = self.assetInfo[each['name']]['masterFile']
+					publishPath = self.assetInfo[each['name']]['publishPath']
+					aprvPxyFile = self.assetInfo[each['name']]['aprvPxyFile']
+					masterPxyFile = self.assetInfo[each['name']]['masterPxyFile']
+					fileType = self.assetInfo[each['name']]['fileType']
+					# display = '%s - %s' % (self.assetInfo[each['name']]['code'], fileType)
+					display = '%s' % (self.assetInfo[each['name']]['code'])
+					thumbnailFile = self.assetInfo[each['name']]['thumbnailFile']
 					
-				if number : 
-					numberDisplay = 'In scene x %s' % number
+					color = [100, 0, 0]
+					iconPath = self.noPreviewIcon
+					sgAssets.append(display)
+					sgPullFiles.append(pullFile)
+					fileCheckList = [pullFile, aprvFile, masterFile, publishPath, aprvPxyFile, masterPxyFile]
 
-				textColors[2] = [200, 100, 100]
+					numberDisplay = 'In scene x 0'
+					number = 0
 
-				if number > 0 : 
-					textColors[2] = [100, 200, 0]
+					for checkFile in fileCheckList : 
 
-				if number == 0 : 
-					textColors[2] = [200, 200, 0]
+						if checkFile : 
+							# split fileName from _rig_ to get generic name without pxy mr level
+							checkFile = self.simplifyPath(checkFile)
 
-				if os.path.exists(thumbnailFile) : 
-					iconPath = thumbnailFile
+							if checkFile in scenePathInfo.keys() : 
+								number = scenePathInfo[checkFile]['number']
 
-				if fileType == 'approved' : 
-					color = [0, 0, 0]
-					aprvCount+=1
 
-				if fileType == 'master' : 
-					color = [0, 0, 0]
-					masterCount+=1
+						
+					if number : 
+						numberDisplay = 'In scene x %s' % number
 
-				if fileType == 'publish' : 
-					color = [0, 0, 0]
-					publishCount+=1
+					textColors[2] = [200, 100, 100]
 
-				if fileType == 'No File' : 
-					print each['name']
-					print 'Approved file missing %s' % self.assetInfo[each['name']]['aprvFile']
-					print 'Master file missing %s' % self.assetInfo[each['name']]['masterFile']
-					print '------------------------' 
-					missingCount+=1
+					if number > 0 : 
+						textColors[2] = [100, 200, 0]
 
-				self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, size = 90)
+					if number == 0 : 
+						textColors[2] = [200, 200, 0]
 
-				if not self.assetInfo[each['name']] in self.sgAssetLists : 
-					self.sgAssetLists.append(self.assetInfo[each['name']])
+					if os.path.exists(thumbnailFile) : 
+						iconPath = thumbnailFile
 
-			i+=1
+					if fileType == 'approved' : 
+						color = [0, 0, 0]
+						aprvCount+=1
+
+					if fileType == 'master' : 
+						color = [0, 0, 0]
+						masterCount+=1
+
+					if fileType == 'publish' : 
+						color = [0, 0, 0]
+						publishCount+=1
+
+					if fileType == 'No File' : 
+						print each['name']
+						print 'Approved file missing %s' % self.assetInfo[each['name']]['aprvFile']
+						print 'Master file missing %s' % self.assetInfo[each['name']]['masterFile']
+						print '------------------------' 
+						missingCount+=1
+
+					self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, size = 90)
+
+					if not self.assetInfo[each['name']] in self.sgAssetLists : 
+						self.sgAssetLists.append(self.assetInfo[each['name']])
+
+				i+=1
 
 		# list not in shotgun ==============================================================================================
 
@@ -582,12 +623,14 @@ class MyForm(QtGui.QMainWindow):
 				pullFile = assetInfo[each]['pullFile']
 				aprvFile = assetInfo[each]['aprvFile']
 				masterFile = assetInfo[each]['masterFile']
+				masterFile2 = assetInfo[each]['masterFile2']
 				publishPath = assetInfo[each]['publishPath']
 				aprvPxyFile = assetInfo[each]['aprvPxyFile']
 				masterPxyFile = assetInfo[each]['masterPxyFile']
+				masterPxyFile2 = assetInfo[each]['masterPxyFile2']
+				genericFile = assetInfo[each]['genericFile']
 
-				fileCheckList = [pullFile, aprvFile, masterFile, publishPath, aprvPxyFile, masterPxyFile]
-
+				fileCheckList = [genericFile]
 
 
 				thumbnailFile = assetInfo[each]['thumbnailFile']
@@ -598,7 +641,6 @@ class MyForm(QtGui.QMainWindow):
 
 				# if maya asset not already in the list
 				if not display in sgAssets : 
-
 					for checkFile in fileCheckList : 
 
 						if checkFile in scenePathInfo.keys() : 
@@ -970,9 +1012,10 @@ class MyForm(QtGui.QMainWindow):
 				assetName = self.assetInfo[each]['code']
 				namespace = assetName
 				path = self.assetInfo[each]['pullFile']
+				pathKey = self.simplifyPath(path)
 
 				if path : 
-					if not path in scenePathInfo.keys() : 
+					if not pathKey in scenePathInfo.keys() : 
 						result = hook.createReference(namespace, path)
 
 					else : 
@@ -1010,7 +1053,11 @@ class MyForm(QtGui.QMainWindow):
 
 		for each in allRefs : 
 			namespace = hook.getNamespace(each)
+
+			# ttv_envext_street_assembly_rig_mr_MASTER.ma{1}
+			# cut { and take cut "rig", check path only first part
 			path = each.split('{')[0]
+			pathKey = self.simplifyPath(each)
 			number = 1
 			display = str()
 			fileType = str()
@@ -1021,11 +1068,11 @@ class MyForm(QtGui.QMainWindow):
 			except : 
 				pass
 
-			if not path in paths : 
-				paths.append(path)
+			if not pathKey in paths : 
+				paths.append(pathKey)
 
 			else : 
-				number = sceneAssetPathInfo[path]['number'] + 1
+				number = sceneAssetPathInfo[pathKey]['number'] + 1
 
 
 			# get file type
@@ -1044,8 +1091,7 @@ class MyForm(QtGui.QMainWindow):
 
 			# get thumbnail
 
-
-			sceneAssetPathInfo[path] = {'namespace': namespace, 'number': number, 'display': display, 'fileType': fileType}
+			sceneAssetPathInfo[pathKey] = {'namespace': namespace, 'number': number, 'display': display, 'fileType': fileType}
 
 		return sceneAssetPathInfo
 
