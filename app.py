@@ -350,8 +350,9 @@ class MyForm(QtGui.QMainWindow):
 
 
 
-	def getAssetInfo(self, sgAssets) : 
+	def getAssetInfo(self, sgAssets, key = 'code') : 
 		assetInfo = dict()
+		dictKey = None
 
 		for each in sgAssets : 
 			id = each['id']
@@ -397,7 +398,8 @@ class MyForm(QtGui.QMainWindow):
 				# ================================================================
 
 				# generic file name
-				genericFile = '%s/ttv_%s_%s_%s_rig' % (publishPath, assetType, parent, variation)
+				genericFile = '%s/ttv_%s_%s_%s' % (publishPath, assetType, parent, variation)
+				genericFile = self.simplifyPath(genericFile)
 
 				# check apprv -> master -> publishVersion g
 				if os.path.exists(aprvFile) : 
@@ -440,7 +442,14 @@ class MyForm(QtGui.QMainWindow):
 				print 'Missing field %s %s %s' % (assetType, parent, variation)
 
 
-			assetInfo[code] = {'id': id,
+			if key == 'code' : 
+				dictKey = code
+
+			if key == 'genericFile' : 
+				dictKey = genericFile
+
+
+			assetInfo[dictKey] = {'id': id,
 								'code': code, 
 								'assetType': assetType, 
 								'parent': parent, 
@@ -469,8 +478,16 @@ class MyForm(QtGui.QMainWindow):
 	def simplifyPath(self, path) : 
 		# U:/projects/ttv/assets/publish/charmain/hank/base/rig/maya/ttv_charmain_hank_base_rig_mr.MASTER.ma{1}
 		# cut asset name from _rig_, keep generic name without level (mr/pxy)
+		key1 = '/publish'
+		key2 = '/approved'
 
-		path = '%s_rig' % path.split('_rig_')[0]
+		if key1 in path : 
+			path = path.replace(key1, '')
+
+		if key2 in path : 
+			path = path.replace(key2, '')
+
+		path = '%s_rig' % path.split('_rig')[0]
 
 		return path
 
@@ -544,10 +561,12 @@ class MyForm(QtGui.QMainWindow):
 					publishPath = self.assetInfo[each['name']]['publishPath']
 					aprvPxyFile = self.assetInfo[each['name']]['aprvPxyFile']
 					masterPxyFile = self.assetInfo[each['name']]['masterPxyFile']
+					genericFile = self.assetInfo[each['name']]['genericFile']
 					fileType = self.assetInfo[each['name']]['fileType']
 					# display = '%s - %s' % (self.assetInfo[each['name']]['code'], fileType)
 					display = '%s' % (self.assetInfo[each['name']]['code'])
 					thumbnailFile = self.assetInfo[each['name']]['thumbnailFile']
+					checkFile = genericFile
 					
 					color = [100, 0, 0]
 					iconPath = self.noPreviewIcon
@@ -558,14 +577,12 @@ class MyForm(QtGui.QMainWindow):
 					numberDisplay = 'In scene x 0'
 					number = 0
 
-					for checkFile in fileCheckList : 
+					if checkFile : 
+						print 'checkFile %s' % checkFile
+						# print scenePathInfo
 
-						if checkFile : 
-							# split fileName from _rig_ to get generic name without pxy mr level
-							checkFile = self.simplifyPath(checkFile)
-
-							if checkFile in scenePathInfo.keys() : 
-								number = scenePathInfo[checkFile]['number']
+						if checkFile in scenePathInfo.keys() : 
+							number = scenePathInfo[checkFile]['number']
 
 
 						
@@ -614,23 +631,16 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.uploadAsset_pushButton.setVisible(False)
 
 		if self.ui.showMayaAsset_checkBox.isChecked() : 
+			assetInfo = self.getAssetInfo(self.allSgAssets, 'genericFile')
 			
 			assetCount = 0
 
 			for each in sorted(assetInfo.keys()) : 
 				display = each
 				fileType = assetInfo[each]['fileType']
-				pullFile = assetInfo[each]['pullFile']
-				aprvFile = assetInfo[each]['aprvFile']
-				masterFile = assetInfo[each]['masterFile']
-				masterFile2 = assetInfo[each]['masterFile2']
-				publishPath = assetInfo[each]['publishPath']
-				aprvPxyFile = assetInfo[each]['aprvPxyFile']
-				masterPxyFile = assetInfo[each]['masterPxyFile']
-				masterPxyFile2 = assetInfo[each]['masterPxyFile2']
 				genericFile = assetInfo[each]['genericFile']
 
-				fileCheckList = [genericFile]
+				checkFile = genericFile
 
 
 				thumbnailFile = assetInfo[each]['thumbnailFile']
@@ -641,10 +651,8 @@ class MyForm(QtGui.QMainWindow):
 
 				# if maya asset not already in the list
 				if not display in sgAssets : 
-					for checkFile in fileCheckList : 
-
-						if checkFile in scenePathInfo.keys() : 
-							number = scenePathInfo[checkFile]['number']
+					if checkFile in scenePathInfo.keys() : 
+						number = scenePathInfo[checkFile]['number']
 
 
 					if number : 
@@ -692,6 +700,8 @@ class MyForm(QtGui.QMainWindow):
 				if assetCount == 0 : 
 					message = 'All assets in shotgun'
 
+		for eachPath in scenePathInfo.keys() : 
+			
 
 		if not assets : 
 			# self.ui.information_label.setText('No Shotgun data')
@@ -1012,25 +1022,34 @@ class MyForm(QtGui.QMainWindow):
 				assetName = self.assetInfo[each]['code']
 				namespace = assetName
 				path = self.assetInfo[each]['pullFile']
-				pathKey = self.simplifyPath(path)
+				fileType = self.assetInfo[each]['fileType']
 
-				if path : 
-					if not pathKey in scenePathInfo.keys() : 
-						result = hook.createReference(namespace, path)
+				if not fileType == 'No File' : 
+					pathKey = self.simplifyPath(path)
+
+					if path : 
+						if not pathKey in scenePathInfo.keys() : 
+							result = hook.createReference(namespace, path)
+
+						else : 
+							# asking if want to create another reference
+							title = 'Confirm create multiple reference'
+							description = '%s already exists in the scene, do you still want to create reference?' % assetName
+							result = self.messageBox(title, description)
+
+							if result == QtGui.QMessageBox.Ok : 
+								result = hook.createReference(namespace, path)
 
 					else : 
-						# asking if want to create another reference
-						title = 'Confirm create multiple reference'
-						description = '%s already exists in the scene, do you still want to create reference?' % assetName
-						result = self.messageBox(title, description)
-
-						if result == QtGui.QMessageBox.Ok : 
-							result = hook.createReference(namespace, path)
+						if selOnly : 
+							title = 'Asset not exists'
+							dialog = '%s has no approved, MASTER or published file' % assetName
+							self.completeDialog(title, dialog)
 
 				else : 
 					if selOnly : 
-						title = 'Asset not exists'
-						dialog = '%s has no approved, MASTER or published file' % assetName
+						title = 'Error'
+						dialog = '%s has no file' % assetName
 						self.completeDialog(title, dialog)
 
 
