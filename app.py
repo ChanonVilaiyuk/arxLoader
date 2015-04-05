@@ -15,7 +15,7 @@ from shiboken import wrapInstance
 
 
 # import ui
-from arxLoader import ui3 as ui
+from arxLoader import ui4 as ui
 reload(ui)
 
 from arxLoader import mayaHook as hook
@@ -65,15 +65,18 @@ class MyForm(QtGui.QMainWindow):
 		self.assetRoot = '%s/%s' % (self.root, self.configData['assetRoot'])
 		self.fileExt = eval(self.configData['ext'])['maya']
 		self.noPreviewIcon = '%s/%s' % (self.iconPath, 'noPreview.png')
+		self.notInPipelineIcon = '%s/%s' % (self.iconPath, 'notInPipeline_icon.png')
 		self.thumbnail = self.configData['thumbnail']
 		self.itemColor = [0, 0, 0]
 		self.textItemColor = [[200, 200, 200], [120, 120, 120], [100, 100, 100]]
 		self.sceneInfo = None
 		self.shotAssets = None
+		self.wrongAssetInfo = dict()
 		self.viewMode = ['view1_icon.png', 'view2_icon.png', 'view3_icon.png', 'view4_icon.png']
 		self.customWidgetMode = [0]
 		self.sgAssetLists = []
 		self.sgShotId = dict()
+		self.camera = 'U:/projects/ttv/assets/publish/etc/camera/rigs/hand_camera_rig_MASTER.ma'
 
 		# init connections
 		self.initConnections()
@@ -96,19 +99,16 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.selectedReference_checkBox.stateChanged.connect(self.setReferenceButton)
 		self.ui.viewMode_comboBox.currentIndexChanged.connect(self.refreshUI)
 		self.ui.showMayaAsset_checkBox.stateChanged.connect(self.refreshUI)
+		self.ui.showWrongAsset_checkBox.stateChanged.connect(self.refreshUI)
 		self.ui.uploadAsset_pushButton.clicked.connect(self.uploadShotgun)
 		self.ui.asset_tabWidget.currentChanged.connect(self.listAllAsset)
+		self.ui.showInfo_pushButton.clicked.connect(self.showWrongAssetInfo)
 
 
 	def initFunctions(self) : 
 		# set the correct layout window
 		self.loadData()
 		self.setWindowMode()
-
-
-	def test(self) : 
-		print 'tab call'
-		
 
 
 	# window area =========================================================================
@@ -125,6 +125,7 @@ class MyForm(QtGui.QMainWindow):
 			mode = 'shotgun'
 			buttonText = 'Create All Reference'
 			value3 = False
+			vOffset = 60
 
 
 		if self.ui.manualBrowser_radioButton.isChecked() : 
@@ -140,13 +141,12 @@ class MyForm(QtGui.QMainWindow):
 			mode = 'browser'
 			buttonText = 'Create Reference'
 			value3 = False
+			vOffset = -60
 		
 		# show / hide
-		self.ui.add_pushButton.setVisible(value3)
-		self.ui.remove_pushButton.setVisible(value3)
-		self.ui.clear_pushButton.setVisible(value3)
 		self.ui.search_frame.setVisible(value)
 		self.ui.filter_frame.setVisible(value3)
+		self.ui.information2_frame.setVisible(False)
 		# self.ui.list_frame.setVisible(value3)
 		self.ui.main_label.setText(text)
 		self.ui.projectInfo_frame.setVisible(value2)
@@ -163,6 +163,8 @@ class MyForm(QtGui.QMainWindow):
 		# self.ui.frame.resize(w, h)
 		# self.resize(w + 14, h + 14)
 		# self.ui.logo_label.setGeometry(lPos, 10, 221, 61)
+		self.ui.showSceneAsset_checkBox.setGeometry(9, 422+vOffset, 114, 17)
+		self.ui.search_frame.setGeometry(9, 445+vOffset, 231, 40)
 		self.setLogo()
 		self.setViewComboBox()
 
@@ -634,6 +636,7 @@ class MyForm(QtGui.QMainWindow):
 
 			# loop for genericPath 
 			for each in sorted(scenePathInfo.keys()) : 
+				number = scenePathInfo[each]['number']
 
 				# if asset in the scene is in shotgun pipeline
 				if each in assetInfo2.keys() : 
@@ -643,69 +646,93 @@ class MyForm(QtGui.QMainWindow):
 					genericFile = assetInfo2[each]['genericFile']
 					checkFile = genericFile
 
-
 					thumbnailFile = assetInfo2[each]['thumbnailFile']
 					iconPath = self.noPreviewIcon
 					numberDisplay = 'In scene x 0'
-					number = 0
 					assetNo = 100
 
 					# if maya asset not already in the list
 					if not display in sgAssets : 
-						if checkFile in scenePathInfo.keys() : 
-							number = scenePathInfo[checkFile]['number']
+						numberDisplay = 'In scene x %s' % number
+
+						if os.path.exists(thumbnailFile) : 
+							iconPath = thumbnailFile
 
 
-						if number : 
-							numberDisplay = 'In scene x %s' % number
+						if fileType == 'approved' : 
+							color = [200, 100, 0]
+							aprvCount+=1
 
-							if os.path.exists(thumbnailFile) : 
-								iconPath = thumbnailFile
+						if fileType == 'master' : 
+							color = [200, 100, 0]
+							masterCount+=1
+
+						if fileType == 'publish' : 
+							color = [200, 100, 0]
+							publishCount+=1
+
+						if fileType == 'No File' : 
+							color = [100, 0, 0]
+							missingCount+=1
+						
+
+						textColors[2] = [200, 100, 100]
+
+						if number > 0 : 
+							textColors[2] = [100, 200, 0]
+
+						if number == 0 : 
+							textColors[2] = [200, 200, 0]
+
+						self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, 90)
+						assetCount+=1
+
+						if not assetInfo2[each] in self.sgAssetLists : 
+							self.sgAssetLists.append(assetInfo2[each])
 
 
-							if fileType == 'approved' : 
-								color = [200, 100, 0]
-								aprvCount+=1
+			if assetCount > 0 : 
+				message = '%s assets Not in shotgun' % assetCount
+				self.ui.uploadAsset_pushButton.setVisible(True)
 
-							if fileType == 'master' : 
-								color = [200, 100, 0]
-								masterCount+=1
+			if assetCount == 0 : 
+				message = 'All assets in shotgun'
 
-							if fileType == 'publish' : 
-								color = [200, 100, 0]
-								publishCount+=1
+		# list not in pipeline ==============================================================================================
 
-							if fileType == 'No File' : 
-								color = [100, 0, 0]
-								missingCount+=1
-							
+		wrongAssetCount = 0
+		info2FrameVisible = False
+		self.wrongAssetInfo = dict()
 
-							textColors[2] = [200, 100, 100]
+		for each in sorted(scenePathInfo.keys()) : 
+			number = scenePathInfo[each]['number']
 
-							if number > 0 : 
-								textColors[2] = [100, 200, 0]
+			if not each in assetInfo2.keys() : 
+				assetPath = scenePathInfo[each]['path']
 
-							if number == 0 : 
-								textColors[2] = [200, 200, 0]
+				if not assetPath == self.camera : 
+					display = scenePathInfo[each]['display']
+					fileType = 'Not in pipeline'
+					numberDisplay = 'In scene x %s' % number
+					iconPath = self.notInPipelineIcon
+					color = [200, 40, 0] 
+					textColors[2] = [0, 0, 0]
+					self.wrongAssetInfo[assetPath] = {'number': number}
+					
+					if self.ui.showWrongAsset_checkBox.isChecked() : 
+						self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, 90)
 
-							self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, 90)
-							assetCount+=1
+					wrongAssetCount += 1
 
-							if not assetInfo2[each] in self.sgAssetLists : 
-								self.sgAssetLists.append(assetInfo2[each])
 
-					if assetCount > 0 : 
-						message = '%s assets Not in shotgun' % assetCount
-						self.ui.uploadAsset_pushButton.setVisible(True)
 
-					if assetCount == 0 : 
-						message = 'All assets in shotgun'
-
-				# if this asset is not in pipeline (wrong naming)
-				else : 
-					namespace = scenePathInfo[each]
-					print 'wrong asset', namespace
-
+		if wrongAssetCount : 
+			info2FrameVisible = True
+			self.ui.info2_label.setVisible(True)
+			self.ui.info2_label.setText('%s asset not in pipeline' % wrongAssetCount)
+			self.ui.info2_label.setStyleSheet('background-color: rgb(200, 40, 0)')
+			
+		self.ui.information2_frame.setVisible(info2FrameVisible)
 
 
 		if not assets : 
@@ -1057,7 +1084,19 @@ class MyForm(QtGui.QMainWindow):
 		# if self.ui.manualBrowser_radioButton.isChecked() : 
 		# 	readAssetList = self.getSelectedWidgetItem(1)
 
-		
+
+
+	def showWrongAssetInfo(self) : 
+		display = '%s wrong assets\n' % (len(self.wrongAssetInfo))
+
+		for each in self.wrongAssetInfo.keys() : 
+			number = self.wrongAssetInfo[each]['number']
+			display += '[%s] x %s\n' % (each, number)
+
+		title = 'Wrong asset'
+		text = display
+		self.completeDialog(title, text)
+
 
 	'''
 	this function get all reference in the scene and return path and number of references
@@ -1074,7 +1113,7 @@ class MyForm(QtGui.QMainWindow):
 			# ttv_envext_street_assembly_rig_mr_MASTER.ma{1}
 			# cut { and take cut "rig", check path only first part
 			path = each.split('{')[0]
-			pathKey = self.simplifyPath(each)
+			pathKey = self.simplifyPath(path)
 			number = 1
 			display = str()
 			fileType = str()
@@ -1291,7 +1330,10 @@ class MyForm(QtGui.QMainWindow):
 		text = '%s\n\r%s' % (text1, text2)
 
 		item = QtGui.QListWidgetItem(self.ui.main_listWidget)
-		item.setIcon(icon)
+
+		if addIcon : 
+			item.setIcon(icon)
+
 		item.setText(text)
 		item.setBackground(QtGui.QColor(color[0], color[1], color[2]))
 		self.ui.main_listWidget.setIconSize(QtCore.QSize(size, size))
@@ -1311,7 +1353,10 @@ class MyForm(QtGui.QMainWindow):
 		text = '%s\n\r%s' % (text1, text2)
 
 		item = QtGui.QListWidgetItem(self.ui.main_listWidget)
-		item.setIcon(icon)
+
+		if addIcon : 
+			item.setIcon(icon)
+
 		item.setText(text)
 		item.setBackground(QtGui.QColor(color[0], color[1], color[2]))
 		self.ui.main_listWidget.setIconSize(QtCore.QSize(size, size))
