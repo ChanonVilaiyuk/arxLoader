@@ -15,7 +15,7 @@ from shiboken import wrapInstance
 
 
 # import ui
-from arxLoader import ui4 as ui
+from arxLoader import ui3 as ui
 reload(ui)
 
 from arxLoader import mayaHook as hook
@@ -65,18 +65,15 @@ class MyForm(QtGui.QMainWindow):
 		self.assetRoot = '%s/%s' % (self.root, self.configData['assetRoot'])
 		self.fileExt = eval(self.configData['ext'])['maya']
 		self.noPreviewIcon = '%s/%s' % (self.iconPath, 'noPreview.png')
-		self.notInPipelineIcon = '%s/%s' % (self.iconPath, 'notInPipeline_icon.png')
 		self.thumbnail = self.configData['thumbnail']
 		self.itemColor = [0, 0, 0]
 		self.textItemColor = [[200, 200, 200], [120, 120, 120], [100, 100, 100]]
 		self.sceneInfo = None
 		self.shotAssets = None
-		self.wrongAssetInfo = dict()
 		self.viewMode = ['view1_icon.png', 'view2_icon.png', 'view3_icon.png', 'view4_icon.png']
 		self.customWidgetMode = [0]
 		self.sgAssetLists = []
 		self.sgShotId = dict()
-		self.camera = 'U:/projects/ttv/assets/publish/etc/camera/rigs/hand_camera_rig_MASTER.ma'
 
 		# init connections
 		self.initConnections()
@@ -99,16 +96,19 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.selectedReference_checkBox.stateChanged.connect(self.setReferenceButton)
 		self.ui.viewMode_comboBox.currentIndexChanged.connect(self.refreshUI)
 		self.ui.showMayaAsset_checkBox.stateChanged.connect(self.refreshUI)
-		self.ui.showWrongAsset_checkBox.stateChanged.connect(self.refreshUI)
 		self.ui.uploadAsset_pushButton.clicked.connect(self.uploadShotgun)
 		self.ui.asset_tabWidget.currentChanged.connect(self.listAllAsset)
-		self.ui.showInfo_pushButton.clicked.connect(self.showWrongAssetInfo)
 
 
 	def initFunctions(self) : 
 		# set the correct layout window
 		self.loadData()
 		self.setWindowMode()
+
+
+	def test(self) : 
+		print 'tab call'
+		
 
 
 	# window area =========================================================================
@@ -125,7 +125,6 @@ class MyForm(QtGui.QMainWindow):
 			mode = 'shotgun'
 			buttonText = 'Create All Reference'
 			value3 = False
-			vOffset = 60
 
 
 		if self.ui.manualBrowser_radioButton.isChecked() : 
@@ -141,12 +140,13 @@ class MyForm(QtGui.QMainWindow):
 			mode = 'browser'
 			buttonText = 'Create Reference'
 			value3 = False
-			vOffset = -60
 		
 		# show / hide
+		self.ui.add_pushButton.setVisible(value3)
+		self.ui.remove_pushButton.setVisible(value3)
+		self.ui.clear_pushButton.setVisible(value3)
 		self.ui.search_frame.setVisible(value)
 		self.ui.filter_frame.setVisible(value3)
-		self.ui.information2_frame.setVisible(False)
 		# self.ui.list_frame.setVisible(value3)
 		self.ui.main_label.setText(text)
 		self.ui.projectInfo_frame.setVisible(value2)
@@ -163,8 +163,6 @@ class MyForm(QtGui.QMainWindow):
 		# self.ui.frame.resize(w, h)
 		# self.resize(w + 14, h + 14)
 		# self.ui.logo_label.setGeometry(lPos, 10, 221, 61)
-		self.ui.showSceneAsset_checkBox.setGeometry(9, 422+vOffset, 114, 17)
-		self.ui.search_frame.setGeometry(9, 445+vOffset, 231, 40)
 		self.setLogo()
 		self.setViewComboBox()
 
@@ -250,7 +248,7 @@ class MyForm(QtGui.QMainWindow):
 
 		# asset info
 		if self.allSgAssets : 
-			self.assetInfo, self.assetInfo2 = self.getAssetInfo(self.allSgAssets)
+			self.assetInfo = self.getAssetInfo(self.allSgAssets)
 
 
 
@@ -289,35 +287,23 @@ class MyForm(QtGui.QMainWindow):
 			projName = sceneInfo['project']
 			episode = sceneInfo['episode']
 			sequenceName = sceneInfo['sequence']
-			shotName = sceneInfo['shot']	
+			shotName = sceneInfo['shot']
+
+			if step == 'layout' : 
+				shotCode = '%s_%s_layout' % (episode, sequenceName.replace('sq', ''))
+
+			if step == 'anim' : 
+				shotCode = '%s_%s_%s' % (episode, sequenceName.replace('sq', ''), shotName.replace('sh', ''))
 
 			shots = sgUtils.sgGetShot(projName, sequenceName)
-			print shots
 
 			if shots : 
-				if step == 'anim' : 
-					shotCode = '%s_%s_%s' % (episode, sequenceName.replace('sq', ''), shotName.replace('sh', ''))
+				for eachShot in shots : 
+					if shotCode == eachShot['code'] : 
+						assets = eachShot['assets']
+						self.sgShotId = {'code': shotCode, 'id': eachShot['id']}
 
-					for eachShot in shots : 
-						if shotCode == eachShot['code'] : 
-							assets = eachShot['assets']
-							self.sgShotId = {'code': shotCode, 'id': eachShot['id']}
-
-							return assets
-
-				if step == 'layout' : 
-					shotCode = '%s_%s_layout' % (episode, sequenceName.replace('sq', ''))
-					assets = []
-
-					for eachShot in shots : 
-						shotAssets = eachShot['assets']
-
-						for eachAsset in shotAssets : 
-							if not eachAsset in assets : 
-								assets.append(eachAsset)
-
-
-					return assets
+						return assets
 
 
 	def loadAllShotgunAsset(self) : 
@@ -366,8 +352,6 @@ class MyForm(QtGui.QMainWindow):
 
 	def getAssetInfo(self, sgAssets) : 
 		assetInfo = dict()
-		assetInfo2 = dict()
-		dictKey = None
 
 		for each in sgAssets : 
 			id = each['id']
@@ -391,9 +375,8 @@ class MyForm(QtGui.QMainWindow):
 				# check type > parent >
 
 				# pxy file ======================================================
-				aprvPxyFile = '%s/ttv_%s_%s_%s_rig_pxy.%s' % (approvedPath, assetType, parent, variation, self.fileExt)
-				masterPxyFile = '%s/ttv_%s_%s_%s_rig_pxy.MASTER.%s' % (publishPath, assetType, parent, variation, self.fileExt)
-				masterPxyFile2 = '%s/ttv_%s_%s_%s_rig_pxy_MASTER.%s' % (publishPath, assetType, parent, variation, self.fileExt)
+				aprvPxyFile = '%s/ttv_%s_%s_%s_rig_mr.%s' % (approvedPath, assetType, parent, variation, self.fileExt)
+				masterPxyFile = '%s/ttv_%s_%s_%s_rig_mr.MASTER.%s' % (publishPath, assetType, parent, variation, self.fileExt)
 
 				maxPublishPxyFile = self.findMaxVersion(publishPath, 'ttv_%s_%s_%s_rig_pxy' % (assetType, parent, variation), self.fileExt)
 
@@ -412,12 +395,20 @@ class MyForm(QtGui.QMainWindow):
 
 				# ================================================================
 
-				# generic file name
-				genericFile = '%s/ttv_%s_%s_%s' % (publishPath, assetType, parent, variation)
-				genericFile = self.simplifyPath(genericFile)
+				# check apprv -> master -> publishVersion 
+				if os.path.exists(aprvPxyFile) : 
+					pullFile = aprvPxyFile
+					fileType = 'approved'
 
-				# check apprv -> master -> publishVersion g
-				if os.path.exists(aprvFile) : 
+				elif os.path.exists(masterPxyFile) : 
+					pullFile = masterPxyFile
+					fileType = 'master'
+
+				elif os.path.exists(publishPxyFile) : 
+					pullFile = publishPxyFile
+					fileType = 'publish'
+
+				elif os.path.exists(aprvFile) : 
 					pullFile = aprvFile
 					fileType = 'approved'
 
@@ -433,23 +424,6 @@ class MyForm(QtGui.QMainWindow):
 					pullFile = publishFile
 					fileType = 'publish'
 
-				elif os.path.exists(aprvPxyFile) : 
-					pullFile = aprvPxyFile
-					fileType = 'approved'
-
-				elif os.path.exists(masterPxyFile) : 
-					pullFile = masterPxyFile
-					fileType = 'master'
-
-				elif os.path.exists(masterPxyFile2) : 
-					pullFile = masterPxyFile2
-					fileType = 'master'
-
-				elif os.path.exists(publishPxyFile) : 
-					pullFile = publishPxyFile
-					fileType = 'publish'
-
-
 				else : 
 					print '%s has no assosiated file' % code
 
@@ -457,50 +431,13 @@ class MyForm(QtGui.QMainWindow):
 				print 'Missing field %s %s %s' % (assetType, parent, variation)
 
 
-			data = {'id': id,
-								'code': code, 
-								'assetType': assetType, 
-								'parent': parent, 
-								'variation': variation, 
-								'pullFile': pullFile, 
-								'fileType': fileType, 
-								'aprvFile': aprvFile, 
-								'masterFile': masterFile, 
-								'masterFile2': masterFile2, 
-								'publishPath': publishPath, 
-								'aprvPxyFile': aprvPxyFile, 
-								'masterPxyFile': masterPxyFile, 
-								'masterPxyFile2': masterPxyFile2, 
-								'genericFile': genericFile,
-								'thumbnailFile': thumbnailFile, 
-								'image': image
-								}
+			assetInfo[code] = {'id': id, 'code': code, 'assetType': assetType, 'parent': parent, 'variation': variation, 'pullFile': pullFile, 'fileType': fileType, 'aprvFile': aprvFile, 'masterFile': masterFile, 'publishPath': publishPath, 'aprvPxyFile': aprvPxyFile, 'masterPxyFile': masterPxyFile, 'thumbnailFile': thumbnailFile, 'image': image}
 
-			assetInfo[code] = data
-			assetInfo2[genericFile] = data
-
-		return assetInfo, assetInfo2
+		return assetInfo
 
 
 			# U:\projects\ttv\assets\approved\charmain\angela\base\rig\maya\ttv_charmain_angela_base_rig_mr.v004.ma
 			# "U:\projects\ttv\assets\publish\charmain\angela\base\rig\maya\ttv_charmain_angela_base_rig_mr.MASTER.ma"
-
-
-	def simplifyPath(self, path) : 
-		# U:/projects/ttv/assets/publish/charmain/hank/base/rig/maya/ttv_charmain_hank_base_rig_mr.MASTER.ma{1}
-		# cut asset name from _rig_, keep generic name without level (mr/pxy)
-		key1 = '/publish'
-		key2 = '/approved'
-
-		if key1 in path : 
-			path = path.replace(key1, '')
-
-		if key2 in path : 
-			path = path.replace(key2, '')
-
-		path = '%s_rig' % path.split('_rig')[0]
-
-		return path
 
 
 	# set UI =======================================================================================================
@@ -556,87 +493,80 @@ class MyForm(QtGui.QMainWindow):
 		scenePathInfo = self.getSceneAssets()
 
 		assetInfo = self.assetInfo
-		assetInfo2 = self.assetInfo2
 
 
 		if self.ui.thumbnail_checkBox.isChecked() : 
 			addIcon = 1
 
 
-		if assets : 
-			for each in assets : 
+		for each in assets : 
 			
-				if each['name'] in self.assetInfo.keys() : 
-					pullFile = self.assetInfo[each['name']]['pullFile']
-					aprvFile = self.assetInfo[each['name']]['aprvFile']
-					masterFile = self.assetInfo[each['name']]['masterFile']
-					publishPath = self.assetInfo[each['name']]['publishPath']
-					aprvPxyFile = self.assetInfo[each['name']]['aprvPxyFile']
-					masterPxyFile = self.assetInfo[each['name']]['masterPxyFile']
-					genericFile = self.assetInfo[each['name']]['genericFile']
-					fileType = self.assetInfo[each['name']]['fileType']
-					# display = '%s - %s' % (self.assetInfo[each['name']]['code'], fileType)
-					display = '%s' % (self.assetInfo[each['name']]['code'])
-					thumbnailFile = self.assetInfo[each['name']]['thumbnailFile']
-					checkFile = genericFile
+			if each['name'] in self.assetInfo.keys() : 
+				pullFile = self.assetInfo[each['name']]['pullFile']
+				aprvFile = self.assetInfo[each['name']]['aprvFile']
+				masterFile = self.assetInfo[each['name']]['masterFile']
+				publishPath = self.assetInfo[each['name']]['publishPath']
+				aprvPxyFile = self.assetInfo[each['name']]['aprvPxyFile']
+				masterPxyFile = self.assetInfo[each['name']]['masterPxyFile']
+				fileType = self.assetInfo[each['name']]['fileType']
+				# display = '%s - %s' % (self.assetInfo[each['name']]['code'], fileType)
+				display = '%s' % (self.assetInfo[each['name']]['code'])
+				thumbnailFile = self.assetInfo[each['name']]['thumbnailFile']
+				
+				color = [100, 0, 0]
+				iconPath = self.noPreviewIcon
+				sgAssets.append(display)
+				sgPullFiles.append(pullFile)
+				fileCheckList = [pullFile, aprvFile, masterFile, publishPath, aprvPxyFile, masterPxyFile]
+
+				numberDisplay = 'In scene x 0'
+				number = 0
+
+				for checkFile in fileCheckList : 
+					if checkFile in scenePathInfo.keys() : 
+						number = scenePathInfo[checkFile]['number']
+
+
 					
-					color = [100, 0, 0]
-					iconPath = self.noPreviewIcon
-					sgAssets.append(display)
-					sgPullFiles.append(pullFile)
-					fileCheckList = [pullFile, aprvFile, masterFile, publishPath, aprvPxyFile, masterPxyFile]
+				if number : 
+					numberDisplay = 'In scene x %s' % number
 
-					numberDisplay = 'In scene x 0'
-					number = 0
+				textColors[2] = [200, 100, 100]
 
-					if checkFile : 
-						print 'checkFile %s' % checkFile
-						# print scenePathInfo
+				if number > 0 : 
+					textColors[2] = [100, 200, 0]
 
-						if checkFile in scenePathInfo.keys() : 
-							number = scenePathInfo[checkFile]['number']
+				if number == 0 : 
+					textColors[2] = [200, 200, 0]
 
+				if os.path.exists(thumbnailFile) : 
+					iconPath = thumbnailFile
 
-						
-					if number : 
-						numberDisplay = 'In scene x %s' % number
+				if fileType == 'approved' : 
+					color = [0, 0, 0]
+					aprvCount+=1
 
-					textColors[2] = [200, 100, 100]
+				if fileType == 'master' : 
+					color = [0, 0, 0]
+					masterCount+=1
 
-					if number > 0 : 
-						textColors[2] = [100, 200, 0]
+				if fileType == 'publish' : 
+					color = [0, 0, 0]
+					publishCount+=1
 
-					if number == 0 : 
-						textColors[2] = [200, 200, 0]
+				if fileType == 'No File' : 
+					print each['name']
+					print 'Approved file missing %s' % self.assetInfo[each['name']]['aprvFile']
+					print 'Master file missing %s' % self.assetInfo[each['name']]['masterFile']
+					print '------------------------' 
+					missingCount+=1
 
-					if os.path.exists(thumbnailFile) : 
-						iconPath = thumbnailFile
+				self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, size = 90)
 
-					if fileType == 'approved' : 
-						color = [0, 0, 0]
-						aprvCount+=1
+				if not self.assetInfo[each['name']] in self.sgAssetLists : 
+					self.sgAssetLists.append(self.assetInfo[each['name']])
 
-					if fileType == 'master' : 
-						color = [0, 0, 0]
-						masterCount+=1
-
-					if fileType == 'publish' : 
-						color = [0, 0, 0]
-						publishCount+=1
-
-					if fileType == 'No File' : 
-						print each['name']
-						print 'Approved file missing %s' % self.assetInfo[each['name']]['aprvFile']
-						print 'Master file missing %s' % self.assetInfo[each['name']]['masterFile']
-						print '------------------------' 
-						missingCount+=1
-
-					self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, size = 90)
-
-					if not self.assetInfo[each['name']] in self.sgAssetLists : 
-						self.sgAssetLists.append(self.assetInfo[each['name']])
-
-				i+=1
+			i+=1
 
 		# list not in shotgun ==============================================================================================
 
@@ -646,25 +576,36 @@ class MyForm(QtGui.QMainWindow):
 			
 			assetCount = 0
 
-			# loop for genericPath 
-			for each in sorted(scenePathInfo.keys()) : 
-				number = scenePathInfo[each]['number']
+			for each in sorted(assetInfo.keys()) : 
+				display = each
+				fileType = assetInfo[each]['fileType']
+				pullFile = assetInfo[each]['pullFile']
+				aprvFile = assetInfo[each]['aprvFile']
+				masterFile = assetInfo[each]['masterFile']
+				publishPath = assetInfo[each]['publishPath']
+				aprvPxyFile = assetInfo[each]['aprvPxyFile']
+				masterPxyFile = assetInfo[each]['masterPxyFile']
 
-				# if asset in the scene is in shotgun pipeline
-				if each in assetInfo2.keys() : 
-					display = assetInfo2[each]['code']
-					fileType = assetInfo2[each]['fileType']
+				fileCheckList = [pullFile, aprvFile, masterFile, publishPath, aprvPxyFile, masterPxyFile]
 
-					genericFile = assetInfo2[each]['genericFile']
-					checkFile = genericFile
 
-					thumbnailFile = assetInfo2[each]['thumbnailFile']
-					iconPath = self.noPreviewIcon
-					numberDisplay = 'In scene x 0'
-					assetNo = 100
 
-					# if maya asset not already in the list
-					if not display in sgAssets : 
+				thumbnailFile = assetInfo[each]['thumbnailFile']
+				iconPath = self.noPreviewIcon
+				numberDisplay = 'In scene x 0'
+				number = 0
+				assetNo = 100
+
+				# if maya asset not already in the list
+				if not display in sgAssets : 
+
+					for checkFile in fileCheckList : 
+
+						if checkFile in scenePathInfo.keys() : 
+							number = scenePathInfo[checkFile]['number']
+
+
+					if number : 
 						numberDisplay = 'In scene x %s' % number
 
 						if os.path.exists(thumbnailFile) : 
@@ -699,53 +640,15 @@ class MyForm(QtGui.QMainWindow):
 						self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, 90)
 						assetCount+=1
 
-						if not assetInfo2[each] in self.sgAssetLists : 
-							self.sgAssetLists.append(assetInfo2[each])
+						if not assetInfo[each] in self.sgAssetLists : 
+							self.sgAssetLists.append(assetInfo[each])
 
+				if assetCount > 0 : 
+					message = '%s assets Not in shotgun' % assetCount
+					self.ui.uploadAsset_pushButton.setVisible(True)
 
-			if assetCount > 0 : 
-				message = '%s assets Not in shotgun' % assetCount
-				self.ui.uploadAsset_pushButton.setVisible(True)
-
-			if assetCount == 0 : 
-				message = 'All assets in shotgun'
-
-		
-		# list not in pipeline ==============================================================================================
-
-		wrongAssetCount = 0
-		info2FrameVisible = False
-		self.wrongAssetInfo = dict()
-
-		for each in sorted(scenePathInfo.keys()) : 
-			number = scenePathInfo[each]['number']
-
-			if not each in assetInfo2.keys() : 
-				assetPath = scenePathInfo[each]['path']
-
-				if not assetPath == self.camera : 
-					display = scenePathInfo[each]['display']
-					fileType = 'Not in pipeline'
-					numberDisplay = 'In scene x %s' % number
-					iconPath = self.notInPipelineIcon
-					color = [200, 40, 0] 
-					textColors[2] = [0, 0, 0]
-					self.wrongAssetInfo[assetPath] = {'number': number}
-					
-					if self.ui.showWrongAsset_checkBox.isChecked() : 
-						self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, 90)
-
-					wrongAssetCount += 1
-
-
-
-		if wrongAssetCount : 
-			info2FrameVisible = True
-			self.ui.info2_label.setVisible(True)
-			self.ui.info2_label.setText('%s asset not in pipeline' % wrongAssetCount)
-			self.ui.info2_label.setStyleSheet('background-color: rgb(200, 40, 0)')
-			
-		self.ui.information2_frame.setVisible(info2FrameVisible)
+				if assetCount == 0 : 
+					message = 'All assets in shotgun'
 
 
 		if not assets : 
@@ -864,6 +767,7 @@ class MyForm(QtGui.QMainWindow):
 
 		# get in scene reference
 		scenePathInfo = self.getSceneAssets()
+		print 'in scene %s' % scenePathInfo
 
 		self.ui.main_listWidget.clear()
 		color = [100, 0, 0]
@@ -882,12 +786,17 @@ class MyForm(QtGui.QMainWindow):
 
 		for each in sorted(assetInfo.keys()) : 
 			fileType = assetInfo[each]['fileType']
+			pullFile = assetInfo[each]['pullFile']
+			aprvFile = assetInfo[each]['aprvFile']
+			masterFile = assetInfo[each]['masterFile']
+			publishPath = assetInfo[each]['publishPath']
+			aprvPxyFile = assetInfo[each]['aprvPxyFile']
+			masterPxyFile = assetInfo[each]['masterPxyFile']
 			assetType = assetInfo[each]['assetType']
 			parent = assetInfo[each]['parent']
 			variation = assetInfo[each]['variation']
 			thumbnailFile = assetInfo[each]['thumbnailFile']
-			genericFile = assetInfo[each]['genericFile']
-			checkFile = genericFile
+			fileCheckList = [pullFile, aprvFile, masterFile, publishPath, aprvPxyFile, masterPxyFile]
 			iconPath = self.noPreviewIcon
 			numberDisplay = 'In scene x 0'
 			number = 0
@@ -895,8 +804,9 @@ class MyForm(QtGui.QMainWindow):
 
 
 
-			if checkFile in scenePathInfo.keys() : 
-				number = scenePathInfo[checkFile]['number']
+			for checkFile in fileCheckList : 
+				if checkFile in scenePathInfo.keys() : 
+					number = scenePathInfo[checkFile]['number']
 
 			if number : 
 				numberDisplay = 'In scene x %s' % number
@@ -1060,34 +970,24 @@ class MyForm(QtGui.QMainWindow):
 				assetName = self.assetInfo[each]['code']
 				namespace = assetName
 				path = self.assetInfo[each]['pullFile']
-				fileType = self.assetInfo[each]['fileType']
 
-				if not fileType == 'No File' : 
-					pathKey = self.simplifyPath(path)
-
-					if path : 
-						if not pathKey in scenePathInfo.keys() : 
-							result = hook.createReference(namespace, path)
-
-						else : 
-							# asking if want to create another reference
-							title = 'Confirm create multiple reference'
-							description = '%s already exists in the scene, do you still want to create reference?' % assetName
-							result = self.messageBox(title, description)
-
-							if result == QtGui.QMessageBox.Ok : 
-								result = hook.createReference(namespace, path)
+				if path : 
+					if not path in scenePathInfo.keys() : 
+						result = hook.createReference(namespace, path)
 
 					else : 
-						if selOnly : 
-							title = 'Asset not exists'
-							dialog = '%s has no approved, MASTER or published file' % assetName
-							self.completeDialog(title, dialog)
+						# asking if want to create another reference
+						title = 'Confirm create multiple reference'
+						description = '%s already exists in the scene, do you still want to create reference?' % assetName
+						result = self.messageBox(title, description)
+
+						if result == QtGui.QMessageBox.Ok : 
+							result = hook.createReference(namespace, path)
 
 				else : 
 					if selOnly : 
-						title = 'Error'
-						dialog = '%s has no file' % assetName
+						title = 'Asset not exists'
+						dialog = '%s has no approved, MASTER or published file' % assetName
 						self.completeDialog(title, dialog)
 
 
@@ -1097,19 +997,7 @@ class MyForm(QtGui.QMainWindow):
 		# if self.ui.manualBrowser_radioButton.isChecked() : 
 		# 	readAssetList = self.getSelectedWidgetItem(1)
 
-
-
-	def showWrongAssetInfo(self) : 
-		display = '%s wrong assets\n' % (len(self.wrongAssetInfo))
-
-		for each in self.wrongAssetInfo.keys() : 
-			number = self.wrongAssetInfo[each]['number']
-			display += '[%s] x %s\n' % (each, number)
-
-		title = 'Wrong asset'
-		text = display
-		self.completeDialog(title, text)
-
+		
 
 	'''
 	this function get all reference in the scene and return path and number of references
@@ -1122,11 +1010,7 @@ class MyForm(QtGui.QMainWindow):
 
 		for each in allRefs : 
 			namespace = hook.getNamespace(each)
-
-			# ttv_envext_street_assembly_rig_mr_MASTER.ma{1}
-			# cut { and take cut "rig", check path only first part
 			path = each.split('{')[0]
-			pathKey = self.simplifyPath(path)
 			number = 1
 			display = str()
 			fileType = str()
@@ -1137,11 +1021,11 @@ class MyForm(QtGui.QMainWindow):
 			except : 
 				pass
 
-			if not pathKey in paths : 
-				paths.append(pathKey)
+			if not path in paths : 
+				paths.append(path)
 
 			else : 
-				number = sceneAssetPathInfo[pathKey]['number'] + 1
+				number = sceneAssetPathInfo[path]['number'] + 1
 
 
 			# get file type
@@ -1160,7 +1044,8 @@ class MyForm(QtGui.QMainWindow):
 
 			# get thumbnail
 
-			sceneAssetPathInfo[pathKey] = {'namespace': namespace, 'number': number, 'display': display, 'fileType': fileType, 'path': path}
+
+			sceneAssetPathInfo[path] = {'namespace': namespace, 'number': number, 'display': display, 'fileType': fileType}
 
 		return sceneAssetPathInfo
 
@@ -1343,10 +1228,7 @@ class MyForm(QtGui.QMainWindow):
 		text = '%s\n\r%s' % (text1, text2)
 
 		item = QtGui.QListWidgetItem(self.ui.main_listWidget)
-
-		if addIcon : 
-			item.setIcon(icon)
-
+		item.setIcon(icon)
 		item.setText(text)
 		item.setBackground(QtGui.QColor(color[0], color[1], color[2]))
 		self.ui.main_listWidget.setIconSize(QtCore.QSize(size, size))
@@ -1366,10 +1248,7 @@ class MyForm(QtGui.QMainWindow):
 		text = '%s\n\r%s' % (text1, text2)
 
 		item = QtGui.QListWidgetItem(self.ui.main_listWidget)
-
-		if addIcon : 
-			item.setIcon(icon)
-
+		item.setIcon(icon)
 		item.setText(text)
 		item.setBackground(QtGui.QColor(color[0], color[1], color[2]))
 		self.ui.main_listWidget.setIconSize(QtCore.QSize(size, size))
@@ -1400,3 +1279,8 @@ class MyForm(QtGui.QMainWindow):
 		QtGui.QMessageBox.information(self, title, dialog, QtGui.QMessageBox.Ok)
 
 		
+
+
+
+
+

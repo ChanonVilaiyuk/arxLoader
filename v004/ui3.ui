@@ -719,7 +719,7 @@
             <x>9</x>
             <y>175</y>
             <width>233</width>
-            <height>148</height>
+            <height>152</height>
            </rect>
           </property>
           <property name="minimumSize">
@@ -846,6 +846,55 @@
            </item>
           </layout>
          </widget>
+         <widget class="QWidget" name="verticalLayoutWidget">
+          <property name="geometry">
+           <rect>
+            <x>9</x>
+            <y>330</y>
+            <width>231</width>
+            <height>63</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_14">
+             <item>
+              <widget class="QPushButton" name="add_pushButton">
+               <property name="minimumSize">
+                <size>
+                 <width>30</width>
+                 <height>30</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>+</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="remove_pushButton">
+               <property name="minimumSize">
+                <size>
+                 <width>30</width>
+                 <height>30</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>-</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QPushButton" name="clear_pushButton">
+             <property name="text">
+              <string>Clear All</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
          <widget class="QLabel" name="logo_label">
           <property name="geometry">
            <rect>
@@ -876,147 +925,6 @@
           <property name="text">
            <string/>
           </property>
-         </widget>
-         <widget class="QFrame" name="information2_frame">
-          <property name="geometry">
-           <rect>
-            <x>9</x>
-            <y>330</y>
-            <width>233</width>
-            <height>91</height>
-           </rect>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::Box</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Sunken</enum>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_5">
-           <property name="spacing">
-            <number>2</number>
-           </property>
-           <item>
-            <widget class="QLabel" name="info2_label">
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>16</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="text">
-              <string>-</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="1,3">
-             <item>
-              <widget class="QCheckBox" name="showWrongAsset_checkBox">
-               <property name="text">
-                <string>Show</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="showInfo_pushButton">
-               <property name="text">
-                <string>Show Info</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <widget class="QPushButton" name="email_pushButton">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>26</height>
-              </size>
-             </property>
-             <property name="palette">
-              <palette>
-               <active>
-                <colorrole role="Button">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>222</red>
-                   <green>216</green>
-                   <blue>42</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-                <colorrole role="ButtonText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>2</red>
-                   <green>2</green>
-                   <blue>2</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </active>
-               <inactive>
-                <colorrole role="Button">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>222</red>
-                   <green>216</green>
-                   <blue>42</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-                <colorrole role="ButtonText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>2</red>
-                   <green>2</green>
-                   <blue>2</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </inactive>
-               <disabled>
-                <colorrole role="Button">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>222</red>
-                   <green>216</green>
-                   <blue>42</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-                <colorrole role="ButtonText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>120</red>
-                   <green>120</green>
-                   <blue>120</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </disabled>
-              </palette>
-             </property>
-             <property name="text">
-              <string>Email Coordinator</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
          </widget>
         </widget>
        </item>
