@@ -54,6 +54,8 @@ class MyForm(QtGui.QMainWindow):
 		self.ui = ui.Ui_loaderWindow()
 		self.ui.setupUi(self)
 
+		self.setWindowTitle('Arx Asset Loader v.1.0.2')
+
 
 		# custom variable
 		self.configPath = '%s/config.txt' % os.path.split(moduleDir)[0]
@@ -77,6 +79,8 @@ class MyForm(QtGui.QMainWindow):
 		self.sgAssetLists = []
 		self.sgShotId = dict()
 		self.camera = 'U:/projects/ttv/assets/publish/etc/camera/rigs/hand_camera_rig_MASTER.ma'
+		self.resolutionList = ['auto', 'pxy', 'mr']
+
 
 		# init connections
 		self.initConnections()
@@ -166,6 +170,7 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.showSceneAsset_checkBox.setGeometry(9, 422+vOffset, 114, 17)
 		self.ui.search_frame.setGeometry(9, 445+vOffset, 231, 40)
 		self.setLogo()
+		self.setResolutionComboBox()
 		self.setViewComboBox()
 
 
@@ -232,6 +237,15 @@ class MyForm(QtGui.QMainWindow):
 
 
 
+	def setResolutionComboBox(self) : 
+
+		self.ui.loadLevel_comboBox.clear()
+
+		for each in self.resolutionList : 
+			self.ui.loadLevel_comboBox.addItem(each)
+
+
+
 	# load data ==================================================================================================
 
 
@@ -292,7 +306,6 @@ class MyForm(QtGui.QMainWindow):
 			shotName = sceneInfo['shot']	
 
 			shots = sgUtils.sgGetShot(projName, sequenceName)
-			print shots
 
 			if shots : 
 				if step == 'anim' : 
@@ -416,42 +429,58 @@ class MyForm(QtGui.QMainWindow):
 				genericFile = '%s/ttv_%s_%s_%s' % (publishPath, assetType, parent, variation)
 				genericFile = self.simplifyPath(genericFile)
 
-				# check apprv -> master -> publishVersion g
+				mrPullFile = str()
+				pxyPullFile = str()
+				noFile = 0
+
+				# check apprv -> master -> publishVersion
 				if os.path.exists(aprvFile) : 
-					pullFile = aprvFile
+					mrPullFile = aprvFile
 					fileType = 'approved'
 
 				elif os.path.exists(masterFile) : 
-					pullFile = masterFile
+					mrPullFile = masterFile
 					fileType = 'master'
 
 				elif os.path.exists(masterFile2) : 
-					pullFile = masterFile2
+					mrPullFile = masterFile2
 					fileType = 'master'
 
 				elif os.path.exists(publishFile) : 
-					pullFile = publishFile
+					mrPullFile = publishFile
 					fileType = 'publish'
 
-				elif os.path.exists(aprvPxyFile) : 
-					pullFile = aprvPxyFile
+				else : 
+					noFile += 1
+
+				if os.path.exists(aprvPxyFile) : 
+					pxyPullFile = aprvPxyFile
 					fileType = 'approved'
 
 				elif os.path.exists(masterPxyFile) : 
-					pullFile = masterPxyFile
+					pxyPullFile = masterPxyFile
 					fileType = 'master'
 
 				elif os.path.exists(masterPxyFile2) : 
-					pullFile = masterPxyFile2
+					pxyPullFile = masterPxyFile2
 					fileType = 'master'
 
 				elif os.path.exists(publishPxyFile) : 
-					pullFile = publishPxyFile
+					pxyPullFile = publishPxyFile
 					fileType = 'publish'
 
-
 				else : 
+					noFile += 1
+
+				if noFile == 2 : 
 					print '%s has no assosiated file' % code
+
+				if pxyPullFile : 
+					pullFile = pxyPullFile 
+
+				if mrPullFile : 
+					pullFile = mrPullFile 
+
 
 			else : 
 				print 'Missing field %s %s %s' % (assetType, parent, variation)
@@ -463,6 +492,8 @@ class MyForm(QtGui.QMainWindow):
 								'parent': parent, 
 								'variation': variation, 
 								'pullFile': pullFile, 
+								'mrPullFile': mrPullFile,
+								'pxyPullFile': pxyPullFile,
 								'fileType': fileType, 
 								'aprvFile': aprvFile, 
 								'masterFile': masterFile, 
@@ -1023,7 +1054,6 @@ class MyForm(QtGui.QMainWindow):
 
 		else : 
 			path = self.assetInfo[item]['publishPath'].replace('/', '\\')
-			print path
 
 		subprocess.Popen(r'explorer /select,"%s"' % path)
 			
@@ -1059,7 +1089,7 @@ class MyForm(QtGui.QMainWindow):
 			for each in readAssetList : 
 				assetName = self.assetInfo[each]['code']
 				namespace = assetName
-				path = self.assetInfo[each]['pullFile']
+				path = self.getResolutionAssetPath(each)
 				fileType = self.assetInfo[each]['fileType']
 
 				if not fileType == 'No File' : 
@@ -1096,6 +1126,23 @@ class MyForm(QtGui.QMainWindow):
 		# read from list
 		# if self.ui.manualBrowser_radioButton.isChecked() : 
 		# 	readAssetList = self.getSelectedWidgetItem(1)
+
+
+
+	def getResolutionAssetPath(self, assetName) : 
+		path = str()
+
+		assetResolution = str(self.ui.loadLevel_comboBox.currentText())
+		if assetResolution == 'auto' : 
+			path = self.assetInfo[assetName]['pullFile']
+
+		if assetResolution == 'pxy' : 
+			path = self.assetInfo[assetName]['pxyPullFile']
+
+		if assetResolution == 'mr' : 
+			path = self.assetInfo[assetName]['mrPullFile']
+
+		return path
 
 
 

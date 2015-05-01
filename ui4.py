@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'U:/extensions/studioTools/python/arxLoader/ui4.ui'
 #
-# Created: Sun Apr 05 23:42:21 2015
+# Created: Fri May 01 16:17:41 2015
 #      by: pyside-uic 0.2.14 running on PySide 1.2.0
 #
 # WARNING! All changes made in this file will be lost!
@@ -215,6 +215,17 @@ class Ui_loaderWindow(object):
         self.thumbnail_checkBox.setChecked(True)
         self.thumbnail_checkBox.setObjectName("thumbnail_checkBox")
         self.horizontalLayout_4.addWidget(self.thumbnail_checkBox)
+        self.label_6 = QtGui.QLabel(self.frame_2)
+        font = QtGui.QFont()
+        font.setWeight(75)
+        font.setBold(True)
+        self.label_6.setFont(font)
+        self.label_6.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_6.setObjectName("label_6")
+        self.horizontalLayout_4.addWidget(self.label_6)
+        self.loadLevel_comboBox = QtGui.QComboBox(self.frame_2)
+        self.loadLevel_comboBox.setObjectName("loadLevel_comboBox")
+        self.horizontalLayout_4.addWidget(self.loadLevel_comboBox)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
         self.uploadAsset_pushButton = QtGui.QPushButton(self.frame_2)
         self.uploadAsset_pushButton.setMinimumSize(QtCore.QSize(0, 26))
@@ -482,6 +493,7 @@ class Ui_loaderWindow(object):
         self.main_listWidget.setSortingEnabled(False)
         self.selectedReference_checkBox.setText(QtGui.QApplication.translate("loaderWindow", "Create selected only", None, QtGui.QApplication.UnicodeUTF8))
         self.thumbnail_checkBox.setText(QtGui.QApplication.translate("loaderWindow", "Show Thumbnail", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_6.setText(QtGui.QApplication.translate("loaderWindow", "Load Level : ", None, QtGui.QApplication.UnicodeUTF8))
         self.uploadAsset_pushButton.setText(QtGui.QApplication.translate("loaderWindow", "Upload list to Shotgun", None, QtGui.QApplication.UnicodeUTF8))
         self.createReference_pushButton.setText(QtGui.QApplication.translate("loaderWindow", "Create All Reference", None, QtGui.QApplication.UnicodeUTF8))
         self.variation_checkBox.setText(QtGui.QApplication.translate("loaderWindow", "Variation", None, QtGui.QApplication.UnicodeUTF8))
