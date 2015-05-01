@@ -1169,26 +1169,62 @@ class MyForm(QtGui.QMainWindow):
 	''' upload asset not in the list to shotgun '''
 
 	def uploadShotgun(self) : 
+		sceneName = hook.getSceneName()
+		sceneInfo = self.getSceneInfo(sceneName)
+		result2 = None
 
-		assets = []
-		shotID = self.sgShotId['id']
+		if sceneInfo : 
+			project = sceneInfo['project']
+			step = sceneInfo['step']
+			episode = sceneInfo['episode']
+			sequenceName = sceneInfo['sequence']
 
-		for each in self.sgAssetLists : 
-			assets.append({'type': 'Asset', 'id': each['id']})
+			assets = []
 
-		result = self.messageBox('Confirm', 'Update assets list to Shotgun?')
+			for each in self.sgAssetLists : 
+				assets.append({'type': 'Asset', 'id': each['id']})
 
-		if result : 
-			self.ui.information_label.setText('Updating shotgun ...')
-			QtGui.QApplication.processEvents()
+			result = self.messageBox('Confirm', 'Update assets list to Shotgun?')
 
-			data = {'assets': assets}
-			result2 = sgUtils.sg.update('Shot', shotID, data)
+			if result : 
+				self.ui.information_label.setText('Updating shotgun ...')
+				QtGui.QApplication.processEvents()
 
-			if result2 : 
-				self.loadData()
-				self.refreshUI()
-				self.completeDialog('Complete', 'Update assets list to shotgun complete')
+				data = {'assets': assets}
+				
+				# if anim, update only that shot
+				if step == 'anim' : 
+					shotID = self.sgShotId['id']
+					result2 = sgUtils.sg.update('Shot', shotID, data)
+
+
+				# if layout, update all shots 
+				if step == 'layout' : 
+					shots = self.sgGetAllLayoutShots(project, sequenceName)
+					batch_data = []
+
+					for each in shots : 
+						shotID = each['id']
+						batch_data.append({"request_type":"update","entity_type":"Shot","entity_id":shotID, "data":data}) 
+
+					result2 = sgUtils.sg.batch(batch_data)
+
+				if result2 : 
+					self.loadData()
+					self.refreshUI()
+					self.completeDialog('Complete', 'Update assets list to shotgun complete')
+
+
+	def sgGetAllLayoutShots(self, project, sequence) : 
+
+		filters = [['project.Project.name', 'is', project], 
+					['sg_sequence.Sequence.code', 'is', sequence], 
+					['code', 'not_contains', 'layout']]
+
+		fields = ['id', 'code']
+		shots = sgUtils.sg.find('Shot', filters, fields)
+
+		return shots
 
 
 	# utils =================================================================
@@ -1399,4 +1435,3 @@ class MyForm(QtGui.QMainWindow):
 	def completeDialog(self, title, dialog) : 
 		QtGui.QMessageBox.information(self, title, dialog, QtGui.QMessageBox.Ok)
 
-		
