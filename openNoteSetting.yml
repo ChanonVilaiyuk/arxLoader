@@ -1,0 +1,26 @@
+missingAssetAnim:
+  receiverType:
+    permissionGroup:
+    - asset_manager
+    - manager_animation
+    user:
+    - Jose Francisco Diego
+    - Claudia Bucek
+    - Santiago Lopez
+    - Darek Przybyla
+    - Novella Iodice
+    - David Notivoli
+missingAssetLayout:
+  receiverType:
+    permissionGroup:
+    - asset_manager
+    - manager_layout
+    user:
+    - Phillip Berg
+updateAssetList:
+  receiverType:
+    permissionGroup:
+    - asset_manager
+    user:
+    - Hana Zaharia
+    - Konstantina Vonorta

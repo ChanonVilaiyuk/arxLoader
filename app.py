@@ -1,19 +1,13 @@
 #Import python modules
 import sys, os, re, shutil, urllib, subprocess, time
-
-# from PyQt4 import QtCore
-# from PyQt4 import QtGui
-# import sip
-# from PyQt4.QtCore import *
-# from PyQt4.QtGui import *
+import yaml
 
 #Import GUI
 from PySide import QtCore
 from PySide import QtGui
-
 from shiboken import wrapInstance
 
-
+# custom module
 # import ui
 from arxLoader import ui4 as ui
 reload(ui)
@@ -59,7 +53,10 @@ class MyForm(QtGui.QMainWindow):
 
 		# custom variable
 		self.configPath = '%s/config.txt' % os.path.split(moduleDir)[0]
+		self.noteSettingPath = '%s/openNoteSetting.yml' % os.path.split(moduleDir)[0]
 		self.configData = config.readSetting(self.configPath)
+		self.noteSetting = self.yamlLoad(self.noteSettingPath)
+
 		self.moduleDir = moduleDir
 		self.iconPath = '%s/%s' % (os.path.split(self.moduleDir)[0], 'icons')
 		self.root = eval(self.configData['root'])['windowRoot']
@@ -246,6 +243,43 @@ class MyForm(QtGui.QMainWindow):
 
 
 
+	# setting read ======================================================
+
+	def yamlLoad(self, settingFile) : 
+		# check config exists 
+		if not os.path.exists(settingFile) : 
+			self.createDefaultConfig(settingFile)
+			self.yamlLoad(settingFile)
+
+		# read config
+		config = file(settingFile, 'r')
+		configData = yaml.load(config)
+
+		return configData
+
+	
+
+	def createDefaultConfig(self, settingFile) : 
+		config = file(settingFile, 'w')
+		data = {'updateAssetList': 
+					{'receiverType' : 
+						{'permissionGroup' : ['asset_manager'],
+						'user': ['Hana Zaharia', 'Konstantina Vonorta']}},
+				'missingAssetLayout': 
+					{'receiverType' : 
+						{'permissionGroup' : ['asset_manager', 'manager_layout'],
+						'user': ['Phillip Berg']}},  
+				'missingAssetAnim': 
+					{'receiverType' : 
+						{'permissionGroup' : ['asset_manager', 'manager_animation'], 
+						'user': ['Jose Francisco Diego', 'Claudia Bucek', 'Santiago Lopez', 'Darek Przybyla', 'Novella Iodice', 'David Notivoli']}}
+				}
+
+
+
+		yaml.dump(data, config, default_flow_style = False)
+
+
 	# load data ==================================================================================================
 
 
@@ -280,6 +314,7 @@ class MyForm(QtGui.QMainWindow):
 			fileName = eles[-1]
 			shot = ''
 			project = 'ttv_%s' % episode
+			genericFileName = fileName.split('.')[0]
 
 			if 'layout' in eles : 
 				step = eles[3]
@@ -289,7 +324,7 @@ class MyForm(QtGui.QMainWindow):
 				step = eles[4]
 
 
-			info = {'project': project, 'episode': episode, 'step': step, 'sequence': sequence, 'shot': shot}
+			info = {'project': project, 'episode': episode, 'step': step, 'sequence': sequence, 'shot': shot, 'fileName': fileName, 'genericFileName': genericFileName}
 
 			return info
 
@@ -303,7 +338,7 @@ class MyForm(QtGui.QMainWindow):
 			projName = sceneInfo['project']
 			episode = sceneInfo['episode']
 			sequenceName = sceneInfo['sequence']
-			shotName = sceneInfo['shot']	
+			shotName = sceneInfo['shot']				
 
 			shots = sgUtils.sgGetShot(projName, sequenceName)
 
@@ -475,11 +510,12 @@ class MyForm(QtGui.QMainWindow):
 				if noFile == 2 : 
 					print '%s has no assosiated file' % code
 
+				if mrPullFile : 
+					pullFile = mrPullFile 
+					
 				if pxyPullFile : 
 					pullFile = pxyPullFile 
 
-				if mrPullFile : 
-					pullFile = mrPullFile 
 
 
 			else : 
@@ -576,6 +612,9 @@ class MyForm(QtGui.QMainWindow):
 		masterCount = 0
 		publishCount = 0
 		missingCount = 0
+		self.missingAssetInfo = []
+		self.additionalAsset = []
+		self.currentSgAsset = []
 		i = 0
 		info = []
 		sgPullFiles = []
@@ -661,11 +700,13 @@ class MyForm(QtGui.QMainWindow):
 						print 'Master file missing %s' % self.assetInfo[each['name']]['masterFile']
 						print '------------------------' 
 						missingCount+=1
+						self.missingAssetInfo.append(each['name'])
 
 					self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, size = 90)
 
 					if not self.assetInfo[each['name']] in self.sgAssetLists : 
 						self.sgAssetLists.append(self.assetInfo[each['name']])
+
 
 				i+=1
 
@@ -732,6 +773,12 @@ class MyForm(QtGui.QMainWindow):
 
 						if not assetInfo2[each] in self.sgAssetLists : 
 							self.sgAssetLists.append(assetInfo2[each])
+							self.additionalAsset.append(scenePathInfo[each])
+
+
+					# if already in the list, add to current asset 
+					else : 
+						self.currentSgAsset.append(scenePathInfo[each])
 
 
 			if assetCount > 0 : 
@@ -770,10 +817,21 @@ class MyForm(QtGui.QMainWindow):
 
 
 
-		if wrongAssetCount : 
+		if wrongAssetCount or missingCount : 
 			info2FrameVisible = True
 			self.ui.info2_label.setVisible(True)
-			self.ui.info2_label.setText('%s asset not in pipeline' % wrongAssetCount)
+			text = str()
+
+			if wrongAssetCount : 
+				text = '%s assets not in pipeline' % wrongAssetCount
+
+			if missingCount : 
+				text = '%s assets missing' % missingCount
+
+			if wrongAssetCount and missingCount : 
+				text = '%s not in pipeline / %s missing' % (wrongAssetCount, missingCount)
+
+			self.ui.info2_label.setText(text)
 			self.ui.info2_label.setStyleSheet('background-color: rgb(200, 40, 0)')
 			
 		self.ui.information2_frame.setVisible(info2FrameVisible)
@@ -1147,11 +1205,20 @@ class MyForm(QtGui.QMainWindow):
 
 
 	def showWrongAssetInfo(self) : 
-		display = '%s wrong assets\n' % (len(self.wrongAssetInfo))
+		if len(self.wrongAssetInfo) : 
+			display = '%s wrong assets\n' % (len(self.wrongAssetInfo))
 
-		for each in self.wrongAssetInfo.keys() : 
-			number = self.wrongAssetInfo[each]['number']
-			display += '[%s] x %s\n' % (each, number)
+			for each in self.wrongAssetInfo.keys() : 
+				number = self.wrongAssetInfo[each]['number']
+				display += '[%s] x %s\n' % (each, number)
+
+
+		if len(self.missingAssetInfo) : 
+			display += '%s missing assets\n' % (len(self.missingAssetInfo))
+
+			for each in self.missingAssetInfo : 
+				display += '- %s\n' % each
+
 
 		title = 'Wrong asset'
 		text = display
@@ -1225,6 +1292,11 @@ class MyForm(QtGui.QMainWindow):
 			step = sceneInfo['step']
 			episode = sceneInfo['episode']
 			sequenceName = sceneInfo['sequence']
+			shotName = sceneInfo['shot']
+			genericFileName = sceneInfo['genericFileName']
+
+			noteText = self.getNoteText(step, genericFileName)
+			print noteText['body']
 
 			assets = []
 
@@ -1244,6 +1316,9 @@ class MyForm(QtGui.QMainWindow):
 					shotID = self.sgShotId['id']
 					result2 = sgUtils.sg.update('Shot', shotID, data)
 
+					# send note
+					self.sendNoteCmd('anim', noteText)
+
 
 				# if layout, update all shots 
 				if step == 'layout' : 
@@ -1256,10 +1331,69 @@ class MyForm(QtGui.QMainWindow):
 
 					result2 = sgUtils.sg.batch(batch_data)
 
+					# send note
+					self.sendNoteCmd('layout', noteText)
+
 				if result2 : 
 					self.loadData()
 					self.refreshUI()
 					self.completeDialog('Complete', 'Update assets list to shotgun complete')
+
+
+	def getNoteText(self, step, genericFileName) : 
+
+		dictValue = dict()
+		tmpText = []
+		body = str()
+		number = len(self.additionalAsset)
+
+		title = '"%s" has %s additional assets [%s]' % (genericFileName, number, step)
+		header = 'Shot "%s"\r\n' % genericFileName 
+		header2 = '%s additional assets' % (number)
+
+		tmpText.append(header)
+		tmpText.append(header2)
+
+		for eachAsset in self.additionalAsset : 
+			assetName = eachAsset['display']
+			assetPath = eachAsset['path']
+			text = '- %s :\t%s' % (assetName, assetPath)
+			tmpText.append(text)
+
+		title2 = '\r\n%s assets already in shotgun' % len(self.shotAssets)
+		tmpText.append(title2)
+
+
+		for eachAsset in self.currentSgAsset : 
+			assetName = eachAsset['display']
+			assetPath = eachAsset['path']
+			text = '- %s :\t%s' % (assetName, assetPath)
+			tmpText.append(text)
+
+		if not len(self.shotAssets) == len(self.currentSgAsset) : 
+			currentSgAssetName = [a['display'] for a in self.currentSgAsset]
+			missingAssets = [a for a in self.shotAssets if not a['name'] in currentSgAssetName]
+
+			tmpText.append('\r\n%s Missing assets' % len(missingAssets))
+
+			for eachAsset in missingAssets : 
+				tmpText.append('- %s' % eachAsset['name'])
+
+
+		body = ('\r\n').join(tmpText)
+		dictValue = {'title': title, 'body': body}
+
+		return dictValue
+
+
+	def sendNoteCmd(self, step, note) : 
+		receiveType = self.noteSetting['updateAssetList']
+
+		for each in receiveType : 
+			for eachType in receiveType[each] : 
+				print eachType
+		# sgUtils.sgCreateNote(projName, noteLinksEntity, receiversEntity, subject, content) : 
+
 
 
 	def sgGetAllLayoutShots(self, project, sequence) : 
