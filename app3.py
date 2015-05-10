@@ -1346,16 +1346,17 @@ class MyForm(QtGui.QMainWindow):
 			# if anim, update only that shot
 			if step == 'anim' : 
 				shotID = self.sgShotId['id']
+				linkEntity = {'type': 'Shot', 'id': shotID}
 
 				# send note
-				self.sendNoteCmd('anim', noteText)
+				self.sendNoteCmd(project, linkEntity, 'anim', noteText)
 
 
 			# if layout, update all shots 
 			if step == 'layout' : 
-
+				layoutShotID = 
 				# send note
-				self.sendNoteCmd('layout', noteText)
+				self.sendNoteCmd(project, 'layout', noteText)
 
 
 
@@ -1405,9 +1406,12 @@ class MyForm(QtGui.QMainWindow):
 		return dictValue
 
 
-	def sendNoteCmd(self, step, note) : 
-		print step
-		print note
+	def sendNoteCmd(self, project, linkEntity, step, note) : 
+
+		subject = note['title']
+		content = note['body']
+		receiversEntity = [{'type': 'HumanUser', 'id': 46}]
+		noteLinksEntity = linkEntity
 		# receiveType = self.noteSetting['updateAssetList']
 
 		# for each in receiveType : 
