@@ -158,6 +158,7 @@ class MyForm(QtGui.QMainWindow):
 		self.ui.uploadAsset_pushButton.setVisible(value3)
 		self.ui.showMayaAsset_checkBox.setVisible(value2)
 		self.ui.asset_tabWidget.setVisible(value)
+		self.ui.email_pushButton.setVisible(value3)
 
 
 		# resizing window
@@ -261,19 +262,25 @@ class MyForm(QtGui.QMainWindow):
 
 	def createDefaultConfig(self, settingFile) : 
 		config = file(settingFile, 'w')
-		data = {'updateAssetList': 
-					{'receiverType' : 
-						{'permissionGroup' : ['asset_manager'],
-						'user': ['Hana Zaharia', 'Konstantina Vonorta']}},
-				'missingAssetLayout': 
-					{'receiverType' : 
-						{'permissionGroup' : ['asset_manager', 'manager_layout'],
-						'user': ['Phillip Berg']}},  
-				'missingAssetAnim': 
-					{'receiverType' : 
-						{'permissionGroup' : ['asset_manager', 'manager_animation'], 
-						'user': ['Jose Francisco Diego', 'Claudia Bucek', 'Santiago Lopez', 'Darek Przybyla', 'Novella Iodice', 'David Notivoli']}}
+		data = {'layout': {'permissionGroup': ['Manager Asset', 'Manager Layout'], 
+							'user': ['kui_user', 'Hannes Reindl']}, 
+				'anim': {'permissionGroup': ['Manager Asset', 'Manager Animation'], 
+							'user': ['kui_user', 'Hannes Reindl']}
+
 				}
+		# data = {'updateAssetList': 
+		# 			{'receiverType' : 
+		# 				{'permissionGroup' : ['asset_manager'],
+		# 				'user': ['Hana Zaharia', 'Konstantina Vonorta']}},
+		# 		'missingAssetLayout': 
+		# 			{'receiverType' : 
+		# 				{'permissionGroup' : ['asset_manager', 'manager_layout'],
+		# 				'user': ['Phillip Berg']}},  
+		# 		'missingAssetAnim': 
+		# 			{'receiverType' : 
+		# 				{'permissionGroup' : ['asset_manager', 'manager_animation'], 
+		# 				'user': ['Jose Francisco Diego', 'Claudia Bucek', 'Santiago Lopez', 'Darek Przybyla', 'Novella Iodice', 'David Notivoli']}}
+		# 		}
 
 
 
@@ -606,8 +613,7 @@ class MyForm(QtGui.QMainWindow):
 
 
 	def listShotAsset(self, assets, normalMode = True) : 
-
-		self.ui.main_listWidget.clear()
+		
 		aprvCount = 0
 		masterCount = 0
 		publishCount = 0
@@ -615,6 +621,10 @@ class MyForm(QtGui.QMainWindow):
 		self.missingAssetInfo = []
 		self.additionalAsset = []
 		self.currentSgAsset = []
+
+		self.sgAssetInfo = dict()
+		self.sgMissingAssets = dict()
+
 		i = 0
 		info = []
 		sgPullFiles = []
@@ -633,6 +643,8 @@ class MyForm(QtGui.QMainWindow):
 		if self.ui.thumbnail_checkBox.isChecked() : 
 			addIcon = 1
 
+		if normalMode : 
+			self.ui.main_listWidget.clear()
 
 		if assets : 
 			for each in assets : 
@@ -661,12 +673,14 @@ class MyForm(QtGui.QMainWindow):
 					number = 0
 
 					if checkFile : 
-						print 'checkFile %s' % checkFile
-						# print scenePathInfo
+						# print 'checkFile %s' % checkFile
 
 						if checkFile in scenePathInfo.keys() : 
 							number = scenePathInfo[checkFile]['number']
+							self.sgAssetInfo[display] = {'path': scenePathInfo[checkFile]['path'], 'status': 'inScene'}
 
+						else : 
+							self.sgAssetInfo[display] = {'path': pullFile, 'status': 'available'}
 
 						
 					if number : 
@@ -702,6 +716,7 @@ class MyForm(QtGui.QMainWindow):
 						print '------------------------' 
 						missingCount+=1
 						self.missingAssetInfo.append(each['name'])
+						self.sgAssetInfo[display] = {'path': '', 'status': fileType}
 
 					if normalMode : 
 						self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, size = 90)
@@ -710,13 +725,20 @@ class MyForm(QtGui.QMainWindow):
 						self.sgAssetLists.append(self.assetInfo[each['name']])
 
 
-				i+=1
+					i+=1
+
+				# asset that is not in ttv_asset 
+				else : 
+					missingCount+=1
+					self.missingAssetInfo.append(each['name'])
+					self.sgAssetInfo[each['name']] = {'path': '', 'status': 'Not in ttv_asset'}
+
 
 		# list not in shotgun ==============================================================================================
 
-		self.ui.uploadAsset_pushButton.setVisible(False)
+		if normalMode : 
+			self.ui.uploadAsset_pushButton.setVisible(False)
 
-		# if self.ui.showMayaAsset_checkBox.isChecked() : 
 		if True : 
 			
 			assetCount = 0
@@ -760,7 +782,7 @@ class MyForm(QtGui.QMainWindow):
 
 						if fileType == 'No File' : 
 							color = [100, 0, 0]
-							missingCount+=1
+							# missingCount+=1
 						
 
 						textColors[2] = [200, 100, 100]
@@ -772,7 +794,8 @@ class MyForm(QtGui.QMainWindow):
 							textColors[2] = [200, 200, 0]
 
 						if normalMode : 
-							self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, 90)
+							if self.ui.showMayaAsset_checkBox.isChecked() : 
+								self.addListWidgetItem(display, fileType, numberDisplay, iconPath, color, textColors, addIcon, 90)
 						assetCount+=1
 						self.additionalAsset.append(scenePathInfo[each])
 
@@ -842,7 +865,8 @@ class MyForm(QtGui.QMainWindow):
 			self.ui.info2_label.setStyleSheet('background-color: rgb(200, 40, 0)')
 			
 		# missing asset 
-		# self.ui.information2_frame.setVisible(info2FrameVisible)
+		if normalMode : 
+			self.ui.information2_frame.setVisible(info2FrameVisible)
 
 
 		if not assets : 
@@ -1168,18 +1192,9 @@ class MyForm(QtGui.QMainWindow):
 
 					if path : 
 						if not pathKey in scenePathInfo.keys() : 
-
-							# if this asset not in shotgun
-							if self.assetNotInSG :
-								result = self.messageBox('Create Reference', message)
-
-								if result == QtGui.QMessageBox.Ok : 
-									result = hook.createReference(namespace, path)
-									createNote = True
-
-								else : 
-									cancelOperation = True
-
+							result = hook.createReference(namespace, path)				
+						
+						
 						else : 
 							# asking if want to create another reference
 							title = 'Confirm create multiple reference'
@@ -1187,17 +1202,8 @@ class MyForm(QtGui.QMainWindow):
 							result = self.messageBox(title, description)
 
 							if result == QtGui.QMessageBox.Ok : 
+								result = hook.createReference(namespace, path)
 
-								# if this asset is not in shotgun list 
-								if self.assetNotInSG :
-									result = self.messageBox('Create Reference', message)
-
-									if result == QtGui.QMessageBox.Ok : 
-										result = hook.createReference(namespace, path)
-										createNote = True
-
-									else : 
-										cancelOperation = True
 
 					else : 
 						if selOnly : 
@@ -1212,15 +1218,14 @@ class MyForm(QtGui.QMainWindow):
 						self.completeDialog(title, dialog)
 
 
-		if not cancelOperation : 
-			self.listShotAsset(self.shotAssets, False)
-			self.refreshUI()
+		self.refreshUI()
+		self.listShotAsset(self.shotAssets, False)
 
-		
-
-		if createNote : 
-			# create open note
+		# if there is asset no in shotgun
+		if self.assetNotInSG : 
 			self.uploadShotgun()
+
+			print 'Note created'
 			
 
 		# read from list
@@ -1346,16 +1351,19 @@ class MyForm(QtGui.QMainWindow):
 			# if anim, update only that shot
 			if step == 'anim' : 
 				shotID = self.sgShotId['id']
+				linkEntity = {'type': 'Shot', 'id': shotID}
 
 				# send note
-				self.sendNoteCmd('anim', noteText)
+				result = self.sendNoteCmd(project, linkEntity, 'anim', noteText)
 
 
 			# if layout, update all shots 
 			if step == 'layout' : 
-
+				shotCode = '%s_%s_layout' % (episode, sequenceName.replace('sq', ''))
+				shotID = sgUtils.sgGetShotID(project, shotCode)
+				linkEntity = shotID
 				# send note
-				self.sendNoteCmd('layout', noteText)
+				result = self.sendNoteCmd(project, linkEntity, 'layout', noteText)
 
 
 
@@ -1365,6 +1373,9 @@ class MyForm(QtGui.QMainWindow):
 		tmpText = []
 		body = str()
 		number = len(self.additionalAsset)
+		sceneSummary = self.sceneSummary()
+
+		# display additional assets ===========================================================
 
 		title = '"%s" has %s additional assets [%s]' % (genericFileName, number, step)
 		header = 'Shot "%s"\r\n' % genericFileName 
@@ -1379,24 +1390,68 @@ class MyForm(QtGui.QMainWindow):
 			text = '- %s :\t%s' % (assetName, assetPath)
 			tmpText.append(text)
 
-		title2 = '\r\n%s assets already in shotgun' % len(self.shotAssets)
+		# display shotgun asset list ==========================================================
+
+		title2 = '\r\n%s assets in shotgun list' % len(self.sgAssetInfo)
 		tmpText.append(title2)
 
-
-		for eachAsset in self.currentSgAsset : 
-			assetName = eachAsset['display']
-			assetPath = eachAsset['path']
-			text = '- %s :\t%s' % (assetName, assetPath)
+		for eachAsset in self.sgAssetInfo : 
+			text = '-\t\t%s' % (eachAsset)
 			tmpText.append(text)
 
-		if not len(self.shotAssets) == len(self.currentSgAsset) : 
-			currentSgAssetName = [a['display'] for a in self.currentSgAsset]
-			missingAssets = [a for a in self.shotAssets if not a['name'] in currentSgAssetName]
+		
+		# display assets in the scene =============================================================
 
-			tmpText.append('\r\n%s Missing assets' % len(missingAssets))
+		title3 = '\r\n\t%s assets in the scene' % len(sceneSummary['sgAssetInScene'])
+		tmpText.append(title3)
 
-			for eachAsset in missingAssets : 
-				tmpText.append('- %s' % eachAsset['name'])
+		if len(sceneSummary['sgAssetInScene']) > 0 : 
+
+			for eachAsset in sceneSummary['sgAssetInScene'] : 
+				assetName = eachAsset['display']
+				assetPath = eachAsset['path']
+				text = '- %s :\t\t%s' % (assetName, assetPath)
+				tmpText.append(text)
+
+
+		# display asset available but not in the scene =============================================
+
+		if len(sceneSummary['sgAssetNotInScene']) > 0 : 
+			title4 = '\r\n\t%s assets not in the scene' % len(sceneSummary['sgAssetNotInScene'])
+			tmpText.append(title4)
+
+			for eachAsset in sceneSummary['sgAssetNotInScene'] : 
+				assetName = eachAsset['display']
+				assetPath = eachAsset['path']
+				text = '- %s :\t\t%s' % (assetName, assetPath)
+				tmpText.append(text)
+
+
+		# display asset that in the list but No File ============================================
+
+		if len(sceneSummary['sgAssetNoFile']) > 0 : 
+			title5 = '\r\n\t%s assets has no file on the server' % len(sceneSummary['sgAssetNoFile'])
+			tmpText.append(title5)
+
+			for eachAsset in sceneSummary['sgAssetNoFile'] : 
+				assetName = eachAsset['display']
+				assetPath = eachAsset['path']
+				text = '- %s :\t\t%s' % (assetName, assetPath)
+				tmpText.append(text)
+
+
+		# display asset in shot episode and asset episode not sync ============================================
+
+		if len(sceneSummary['sgAssetNotSync']) > 0 : 
+			title6 = '\r\n\t%s assets not match ttv_asset' % len(sceneSummary['sgAssetNotSync'])
+			tmpText.append(title6)
+
+			for eachAsset in sceneSummary['sgAssetNotSync'] : 
+				assetName = eachAsset['display']
+				assetPath = eachAsset['path']
+				text = '- %s :\t\t%s' % (assetName, assetPath)
+				tmpText.append(text)
+
 
 
 		body = ('\r\n').join(tmpText)
@@ -1405,16 +1460,67 @@ class MyForm(QtGui.QMainWindow):
 		return dictValue
 
 
-	def sendNoteCmd(self, step, note) : 
-		print step
-		print note
-		# receiveType = self.noteSetting['updateAssetList']
+	def sendNoteCmd(self, project, linkEntity, step, note) : 
 
-		# for each in receiveType : 
-		# 	for eachType in receiveType[each] : 
-		# 		print eachType
-		# sgUtils.sgCreateNote(projName, noteLinksEntity, receiversEntity, subject, content) : 
+		projName = project
+		subject = note['title']
+		content = note['body']
+		receiversEntity = []
+		noteLinksEntity =[linkEntity]
 
+		sendTo = 'user'
+		# sendTo = 'permissionGroup'
+
+		users = self.noteSetting[step][sendTo]
+		
+		if sendTo == 'user' : 
+			for eachUser in users : 
+				userEntity = sgUtils.sgFindUserEntity(eachUser)
+				receiversEntity.append(userEntity)
+
+		if sendTo == 'permissionGroup' : 
+			groups = users
+
+			for eachGroup in groups : 
+				userEntity = sgUtils.sgFindUserByPermission(eachGroup)
+				receiversEntity = receiversEntity + userEntity
+
+		result = sgUtils.sgCreateNote(projName, noteLinksEntity, receiversEntity, subject, content)
+
+		return result
+
+
+
+	def sceneSummary(self) : 
+
+		sgAssetInScene = []
+		sgAssetNotInScene = []
+		sgAssetNoFile = []
+		sgAssetNotSync = []
+		sceneSummary = dict()
+
+		for each in self.sgAssetInfo : 
+			display = each
+			data = self.sgAssetInfo[each]
+			status = data['status']
+			path = data['path']
+
+			if status == 'inScene' : 
+				sgAssetInScene.append({'display': display, 'path': path})
+
+			if status == 'available' : 
+				sgAssetNotInScene.append({'display': display, 'path': path})
+
+			if status == 'No File' : 
+				sgAssetNoFile.append({'display': display, 'path': path})
+
+			if status == 'Not in ttv_asset' : 
+				sgAssetNotSync.append({'display': display, 'path': path})
+
+
+		sceneSummary = {'sgAssetInScene': sgAssetInScene, 'sgAssetNotInScene': sgAssetNotInScene, 'sgAssetNoFile': sgAssetNoFile, 'sgAssetNotSync': sgAssetNotSync}
+
+		return sceneSummary
 
 
 	def sgGetAllLayoutShots(self, project, sequence) : 
