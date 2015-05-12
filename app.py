@@ -48,7 +48,7 @@ class MyForm(QtGui.QMainWindow):
 		self.ui = ui.Ui_loaderWindow()
 		self.ui.setupUi(self)
 
-		self.setWindowTitle('Arx Asset Loader v.1.0.2')
+		self.setWindowTitle('Arx Asset Loader v.1.0.4')
 
 
 		# custom variable
@@ -77,6 +77,8 @@ class MyForm(QtGui.QMainWindow):
 		self.sgShotId = dict()
 		self.camera = 'U:/projects/ttv/assets/publish/etc/camera/rigs/hand_camera_rig_MASTER.ma'
 		self.resolutionList = ['auto', 'pxy', 'mr']
+		self.sendNoteTo = 'user'
+		# self.sendNoteTo = 'permissionGroup'
 
 
 		# init connections
@@ -1468,8 +1470,7 @@ class MyForm(QtGui.QMainWindow):
 		receiversEntity = []
 		noteLinksEntity =[linkEntity]
 
-		sendTo = 'user'
-		# sendTo = 'permissionGroup'
+		sendTo = self.sendNoteTo
 
 		users = self.noteSetting[step][sendTo]
 		
