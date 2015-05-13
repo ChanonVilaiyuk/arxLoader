@@ -1183,18 +1183,20 @@ class MyForm(QtGui.QMainWindow):
 		if readAssetList : 
 
 			for each in readAssetList : 
+				createNote = False
 				assetName = self.assetInfo[each]['code']
 				namespace = assetName
 				path = self.getResolutionAssetPath(each)
 				fileType = self.assetInfo[each]['fileType']
-				message = '%s is not in the asset list. Do you still want to create reference?' % namespace
 
 				if not fileType == 'No File' : 
 					pathKey = self.simplifyPath(path)
 
 					if path : 
 						if not pathKey in scenePathInfo.keys() : 
-							result = hook.createReference(namespace, path)				
+							if self.checkReferenceAsset(path) : 
+								result = hook.createReference(namespace, path)		
+								createNote = True		
 						
 						
 						else : 
@@ -1204,7 +1206,9 @@ class MyForm(QtGui.QMainWindow):
 							result = self.messageBox(title, description)
 
 							if result == QtGui.QMessageBox.Ok : 
-								result = hook.createReference(namespace, path)
+								if self.checkReferenceAsset(path) : 
+									result = hook.createReference(namespace, path)
+									createNote = True
 
 
 					else : 
@@ -1225,9 +1229,10 @@ class MyForm(QtGui.QMainWindow):
 
 		# if there is asset no in shotgun
 		if self.assetNotInSG : 
-			self.uploadShotgun()
+			if createNote : 
+				self.uploadShotgun()
 
-			print 'Note created'
+				print 'Note created'
 			
 
 		# read from list
@@ -1327,6 +1332,33 @@ class MyForm(QtGui.QMainWindow):
 
 		return sceneAssetPathInfo
 
+
+
+	# check if the reference is in the shotgun list
+	def checkReferenceAsset(self, referencePath) : 
+
+		genericPath = self.simplifyPath(referencePath)
+
+		# if asset in the scene is in shotgun pipeline
+		if genericPath in self.assetInfo2.keys() : 
+			display = self.assetInfo2[genericPath]['code']
+
+			# asset not in shotgun list 
+			if not display in self.sgAssetInfo.keys() : 
+				result = self.messageBox('Warning', '%s is not in shotgun list. Do you still want to proceed?' % display)
+
+				if result == QtGui.QMessageBox.Ok : 
+					return True
+
+
+			else : 
+				return True
+
+		else : 
+			result = self.messageBox('Warning', '%s is not in the pipeline. Do you still want to proceed?' % referencePath)
+
+			if result == QtGui.QMessageBox.Ok : 
+				return True
 
 
 	''' upload asset not in the list to shotgun 
