@@ -615,6 +615,8 @@ class MyForm(QtGui.QMainWindow):
 
 
 	def listShotAsset(self, assets, normalMode = True) : 
+		# normal mode is loading data and display on listWidget
+		# normal mode = False mean loading data only and not display on listWidget
 		
 		aprvCount = 0
 		masterCount = 0
@@ -622,7 +624,6 @@ class MyForm(QtGui.QMainWindow):
 		missingCount = 0
 		self.missingAssetInfo = []
 		self.additionalAsset = []
-		self.currentSgAsset = []
 
 		self.sgAssetInfo = dict()
 		self.sgMissingAssets = dict()
@@ -660,7 +661,6 @@ class MyForm(QtGui.QMainWindow):
 					masterPxyFile = self.assetInfo[each['name']]['masterPxyFile']
 					genericFile = self.assetInfo[each['name']]['genericFile']
 					fileType = self.assetInfo[each['name']]['fileType']
-					# display = '%s - %s' % (self.assetInfo[each['name']]['code'], fileType)
 					display = '%s' % (self.assetInfo[each['name']]['code'])
 					thumbnailFile = self.assetInfo[each['name']]['thumbnailFile']
 					checkFile = genericFile
@@ -674,27 +674,24 @@ class MyForm(QtGui.QMainWindow):
 					numberDisplay = 'In scene x 0'
 					number = 0
 
+					# compare generic path with current asset in the scene
 					if checkFile : 
-						# print 'checkFile %s' % checkFile
 
+						# if asset is in the scene
 						if checkFile in scenePathInfo.keys() : 
 							number = scenePathInfo[checkFile]['number']
 							self.sgAssetInfo[display] = {'path': scenePathInfo[checkFile]['path'], 'status': 'inScene'}
 
+						# asset is available, but not reference in yet
 						else : 
 							self.sgAssetInfo[display] = {'path': pullFile, 'status': 'available'}
 
 						
+					# display number of asset
 					if number : 
 						numberDisplay = 'In scene x %s' % number
 
 					textColors[2] = [200, 100, 100]
-
-					if number > 0 : 
-						textColors[2] = [100, 200, 0]
-
-					if number == 0 : 
-						textColors[2] = [200, 200, 0]
 
 					if os.path.exists(thumbnailFile) : 
 						iconPath = thumbnailFile
@@ -710,6 +707,14 @@ class MyForm(QtGui.QMainWindow):
 					if fileType == 'publish' : 
 						color = [0, 0, 0]
 						publishCount+=1
+
+					if number > 0 : 
+						textColors[2] = [100, 200, 0]
+						color = [40, 160, 40]
+
+					if number == 0 : 
+						textColors[2] = [200, 200, 0]
+						# color = [0, 0, 0]
 
 					if fileType == 'No File' : 
 						print each['name']
@@ -803,12 +808,6 @@ class MyForm(QtGui.QMainWindow):
 
 						if not assetInfo2[each] in self.sgAssetLists : 
 							self.sgAssetLists.append(assetInfo2[each])
-							
-
-
-					# if already in the list, add to current asset 
-					else : 
-						self.currentSgAsset.append(scenePathInfo[each])
 
 
 			if assetCount > 0 : 
@@ -1224,7 +1223,10 @@ class MyForm(QtGui.QMainWindow):
 						self.completeDialog(title, dialog)
 
 
+		# refresh UI on the same page
 		self.refreshUI()
+
+		# reading data only, not list data in UI
 		self.listShotAsset(self.shotAssets, False)
 
 		# if there is asset no in shotgun
